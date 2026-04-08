@@ -331,7 +331,9 @@ public class Scanner {
 	}
 
 	Token NextToken() {
-		while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') NextCh();
+		while (ch == ' ' ||
+			ch >= 9 && ch <= 10 || ch == 13 || ch == ' '
+		) NextCh();
 
 		int recKind = noSym;
 		int recEnd = pos;

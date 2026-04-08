@@ -9,23 +9,6 @@ TOKENS
   ident  = letter {letter | digit}.
   number = digit {digit}.
 
-  func    = "func".
-  if      = "if".
-  else    = "else".
-  while   = "while".
-  return  = "return".
-  skip    = "skip".
-  print   = "print".
-  send    = "send".
-  to      = "to".
-  spawn   = "spawn".
-  receive = "receive".
-  self    = "self".
-
-  Int  = "Int".
-  Bool = "Bool".
-  Pid  = "Pid".
-
 IGNORE ws
 
 PRODUCTIONS
@@ -38,7 +21,7 @@ Function =
 
 Params =
     Param { "," Param }
-  | 
+  |
 .
 
 Param =
@@ -52,7 +35,7 @@ Type =
 .
 
 StatementList =
-    Statement { ";" Statement }
+    [ Statement { ";" Statement } ]
 .
 
 Statement =
@@ -119,10 +102,13 @@ AndExp =
   EqExp { "&&" EqExp }
 .
 
-EqExp = RelExp [ ("==" | "!=") RelExp ] .
+EqExp =
+  RelExp [ ("==" | "!=") RelExp ]
+.
 
-RelExp = AddExp [ ("<" | ">" | "<=" | ">=") AddExp ] .
-
+RelExp =
+  AddExp [ ("<" | ">" | "<=" | ">=") AddExp ]
+.
 
 AddExp =
   MulExp { ("+" | "-") MulExp }
@@ -140,6 +126,8 @@ UnaryExp =
 
 Primary =
     number
+  | "true"
+  | "false"
   | ident PrimaryTail
   | "self"
   | "(" Expr ")"
