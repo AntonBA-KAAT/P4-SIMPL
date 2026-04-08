@@ -7,4 +7,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Grammar\Parser.cs" Link="Parser.cs" />
+    <Compile Include="..\Grammar\Scanner.cs" Link="Scanner.cs" />
+  </ItemGroup>
+
 </Project>

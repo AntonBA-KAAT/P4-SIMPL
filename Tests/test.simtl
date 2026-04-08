@@ -1,0 +1,8 @@
+func Int main() {
+	Int x = 1;
+	Int y = 3;
+	if (x < y) { print(x) } else { skip };
+	while (x < 10) { x = x + 1 };
+	send x to self;
+	return x
+}
