@@ -246,7 +246,7 @@ public bool HasCallTail;
 		name = t.val; 
 		Expect(16);
 		RHS();
-		StatementResult = new AssignNode(name, RhsResult); 
+		StatementResult = new AssignNode(new VarNode(name), RhsResult); 
 	}
 
 	void DeclStmt() {

@@ -89,7 +89,7 @@ WhileStmt =
 AssignStmt =
   (. string name; .)
   ident (. name = t.val; .) "=" RHS
-  (. StatementResult = new AssignNode(name, RhsResult); .)
+  (. StatementResult = new AssignNode(new VarNode(name), RhsResult); .)
 .
 
 DeclStmt =

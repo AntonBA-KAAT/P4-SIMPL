@@ -21,7 +21,7 @@ public sealed record IfNode(ExprNode Condition, IReadOnlyList<StatementNode> The
 
 public sealed record WhileNode(ExprNode Condition, IReadOnlyList<StatementNode> Body) : StatementNode;
 
-public sealed record AssignNode(string Name, RhsNode Value) : StatementNode;
+public sealed record AssignNode(VarNode Name, RhsNode Value) : StatementNode;
 
 public sealed record DeclNode(TypeNode DeclType, string Name, ExprNode Value) : StatementNode;
 
@@ -51,7 +51,7 @@ public sealed record VarNode(string Name) : ExprNode;
 
 public sealed record SelfNode() : ExprNode;
 
-public sealed record CallExprNode(string Name, IReadOnlyList<ExprNode>? Arguments) : ExprNode;
+public sealed record CallExprNode(string Name, IReadOnlyList<ExprNode> Arguments) : ExprNode;
 
 public sealed record UnaryExprNode(string Operator, ExprNode Operand) : ExprNode;
 
