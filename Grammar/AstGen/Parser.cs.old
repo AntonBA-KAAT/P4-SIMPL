@@ -1,6 +1,8 @@
 
 using System;
 
+namespace MyLangAstGen {
+
 
 
 public class Parser {
@@ -19,6 +21,20 @@ public class Parser {
 	public Token t;    // last recognized token
 	public Token la;   // lookahead token
 	int errDist = minErrDist;
+
+public ProgramNode ProgramResult;
+public System.Collections.Generic.List<FunctionNode> FunctionsResult;
+public FunctionNode FunctionResult;
+public System.Collections.Generic.List<ParamNode> ParamsResult;
+public ParamNode ParamResult;
+public TypeNode TypeResult;
+public System.Collections.Generic.List<StatementNode> StatementListResult;
+public StatementNode StatementResult;
+public RhsNode RhsResult;
+public System.Collections.Generic.List<ExprNode> ArgsResult;
+public ExprNode ExprResult;
+public System.Collections.Generic.List<ExprNode> CallArgsResult;
+public bool HasCallTail;
 
 
 
@@ -79,58 +95,78 @@ public class Parser {
 	}
 
 	
-	void MyLang() {
+	void MyLangAST() {
+		FunctionsResult = new System.Collections.Generic.List<FunctionNode>(); 
 		while (la.kind == 3) {
 			Function();
+			FunctionsResult.Add(FunctionResult); 
 		}
+		ProgramResult = new ProgramNode(FunctionsResult); 
 	}
 
 	void Function() {
+		string functionName; TypeNode returnType; 
 		Expect(3);
 		Type();
+		returnType = TypeResult; 
 		Expect(1);
+		functionName = t.val; 
 		Expect(4);
 		Params();
 		Expect(5);
 		Expect(6);
 		StatementList();
 		Expect(7);
+		FunctionResult = new FunctionNode(returnType, functionName, ParamsResult, StatementListResult); 
 	}
 
 	void Type() {
 		if (la.kind == 9) {
 			Get();
+			TypeResult = TypeNode.Int; 
 		} else if (la.kind == 10) {
 			Get();
+			TypeResult = TypeNode.Bool; 
 		} else if (la.kind == 11) {
 			Get();
+			TypeResult = TypeNode.Pid; 
 		} else SynErr(41);
 	}
 
 	void Params() {
+		var paramsList = new System.Collections.Generic.List<ParamNode>(); 
 		if (la.kind == 9 || la.kind == 10 || la.kind == 11) {
 			Param();
+			paramsList.Add(ParamResult); 
 			while (la.kind == 8) {
 				Get();
 				Param();
+				paramsList.Add(ParamResult); 
 			}
-		} else if (la.kind == 5) {
-		} else SynErr(42);
+		}
+		ParamsResult = paramsList; 
 	}
 
 	void StatementList() {
+		var statements = new System.Collections.Generic.List<StatementNode>(); 
 		if (StartOf(1)) {
 			Statement();
+			statements.Add(StatementResult); 
 			while (la.kind == 12) {
 				Get();
 				Statement();
+				statements.Add(StatementResult); 
 			}
 		}
+		StatementListResult = statements; 
 	}
 
 	void Param() {
+		string paramName; 
 		Type();
 		Expect(1);
+		paramName = t.val; 
+		ParamResult = new ParamNode(TypeResult, paramName); 
 	}
 
 	void Statement() {
@@ -167,45 +203,60 @@ public class Parser {
 			SkipStmt();
 			break;
 		}
-		default: SynErr(43); break;
+		default: SynErr(42); break;
 		}
 	}
 
 	void IfStmt() {
+		ExprNode condition; System.Collections.Generic.List<StatementNode> thenBranch = null; System.Collections.Generic.List<StatementNode> elseBranch = null; 
 		Expect(13);
 		Expect(4);
 		Expr();
+		condition = ExprResult; 
 		Expect(5);
 		Expect(6);
 		StatementList();
+		thenBranch = StatementListResult; 
 		Expect(7);
 		Expect(14);
 		Expect(6);
 		StatementList();
+		elseBranch = StatementListResult; 
 		Expect(7);
+		StatementResult = new IfNode(condition, thenBranch, elseBranch); 
 	}
 
 	void WhileStmt() {
+		ExprNode condition; System.Collections.Generic.List<StatementNode> body = null; 
 		Expect(15);
 		Expect(4);
 		Expr();
+		condition = ExprResult; 
 		Expect(5);
 		Expect(6);
 		StatementList();
+		body = StatementListResult; 
 		Expect(7);
+		StatementResult = new WhileNode(condition, body); 
 	}
 
 	void AssignStmt() {
+		string name; 
 		Expect(1);
+		name = t.val; 
 		Expect(16);
 		RHS();
+		StatementResult = new AssignNode(name, RhsResult); 
 	}
 
 	void DeclStmt() {
+		string name; 
 		Type();
 		Expect(1);
+		name = t.val; 
 		Expect(16);
 		Expr();
+		StatementResult = new DeclNode(TypeResult, name, ExprResult); 
 	}
 
 	void PrintStmt() {
@@ -213,22 +264,29 @@ public class Parser {
 		Expect(4);
 		Expr();
 		Expect(5);
+		StatementResult = new PrintNode(ExprResult); 
 	}
 
 	void ReturnStmt() {
 		Expect(18);
 		Expr();
+		StatementResult = new ReturnNode(ExprResult); 
 	}
 
 	void SendStmt() {
+		ExprNode message; ExprNode target; 
 		Expect(19);
 		Expr();
+		message = ExprResult; 
 		Expect(20);
 		Expr();
+		target = ExprResult; 
+		StatementResult = new SendNode(message, target); 
 	}
 
 	void SkipStmt() {
 		Expect(21);
+		StatementResult = new SkipNode(); 
 	}
 
 	void Expr() {
@@ -240,58 +298,76 @@ public class Parser {
 			Get();
 			Expect(4);
 			Expect(5);
+			RhsResult = new ReceiveRhsNode(); 
 		} else if (la.kind == 23) {
 			Get();
 			Expect(1);
+			string spawnName = t.val; 
 			Expect(4);
 			Args();
 			Expect(5);
+			RhsResult = new SpawnRhsNode(spawnName, ArgsResult); 
 		} else if (StartOf(2)) {
 			Expr();
-		} else SynErr(44);
+			RhsResult = new ExprRhsNode(ExprResult); 
+		} else SynErr(43);
 	}
 
 	void Args() {
+		var args = new System.Collections.Generic.List<ExprNode>(); 
 		if (StartOf(2)) {
 			Expr();
+			args.Add(ExprResult); 
 			while (la.kind == 8) {
 				Get();
 				Expr();
+				args.Add(ExprResult); 
 			}
-		} else if (la.kind == 5) {
-		} else SynErr(45);
+		}
+		ArgsResult = args; 
 	}
 
 	void OrExp() {
 		AndExp();
+		ExprNode left = ExprResult; 
 		while (la.kind == 24) {
 			Get();
 			AndExp();
+			left = new BinaryExprNode("||", left, ExprResult); 
 		}
+		ExprResult = left; 
 	}
 
 	void AndExp() {
 		EqExp();
+		ExprNode left = ExprResult; 
 		while (la.kind == 25) {
 			Get();
 			EqExp();
+			left = new BinaryExprNode("&&", left, ExprResult); 
 		}
+		ExprResult = left; 
 	}
 
 	void EqExp() {
 		RelExp();
+		ExprNode left = ExprResult; 
 		if (la.kind == 26 || la.kind == 27) {
 			if (la.kind == 26) {
 				Get();
 			} else {
 				Get();
 			}
+			string op = t.val; 
 			RelExp();
+			left = new BinaryExprNode(op, left, ExprResult); 
 		}
+		ExprResult = left; 
 	}
 
 	void RelExp() {
 		AddExp();
+		ExprNode left = ExprResult; 
 		if (StartOf(3)) {
 			if (la.kind == 28) {
 				Get();
@@ -302,67 +378,86 @@ public class Parser {
 			} else {
 				Get();
 			}
+			string op = t.val; 
 			AddExp();
+			left = new BinaryExprNode(op, left, ExprResult); 
 		}
+		ExprResult = left; 
 	}
 
 	void AddExp() {
 		MulExp();
+		ExprNode left = ExprResult; 
 		while (la.kind == 32 || la.kind == 33) {
 			if (la.kind == 32) {
 				Get();
 			} else {
 				Get();
 			}
+			string op = t.val; 
 			MulExp();
+			left = new BinaryExprNode(op, left, ExprResult); 
 		}
+		ExprResult = left; 
 	}
 
 	void MulExp() {
 		UnaryExp();
+		ExprNode left = ExprResult; 
 		while (la.kind == 34 || la.kind == 35) {
 			if (la.kind == 34) {
 				Get();
 			} else {
 				Get();
 			}
+			string op = t.val; 
 			UnaryExp();
+			left = new BinaryExprNode(op, left, ExprResult); 
 		}
+		ExprResult = left; 
 	}
 
 	void UnaryExp() {
 		if (la.kind == 36) {
 			Get();
 			UnaryExp();
+			ExprResult = new UnaryExprNode("!", ExprResult); 
 		} else if (la.kind == 33) {
 			Get();
 			UnaryExp();
+			ExprResult = new UnaryExprNode("-", ExprResult); 
 		} else if (StartOf(4)) {
 			Primary();
-		} else SynErr(46);
+		} else SynErr(44);
 	}
 
 	void Primary() {
 		switch (la.kind) {
 		case 2: {
 			Get();
+			ExprResult = new NumberNode(t.val); 
 			break;
 		}
 		case 37: {
 			Get();
+			ExprResult = new BoolNode(true); 
 			break;
 		}
 		case 38: {
 			Get();
+			ExprResult = new BoolNode(false); 
 			break;
 		}
 		case 1: {
 			Get();
+			string name = t.val; 
 			PrimaryTail();
+			ExprResult = HasCallTail ? new CallExprNode(name, CallArgsResult) : new VarNode(name); 
 			break;
 		}
 		case 39: {
 			Get();
+			ExprResult = new SelfNode(); 
 			break;
 		}
 		case 4: {
@@ -371,7 +466,7 @@ public class Parser {
 			Expect(5);
 			break;
 		}
-		default: SynErr(47); break;
+		default: SynErr(45); break;
 		}
 	}
 
@@ -379,9 +474,11 @@ public class Parser {
 		if (la.kind == 4) {
 			Get();
 			Args();
+			CallArgsResult = ArgsResult; HasCallTail = true; 
 			Expect(5);
 		} else if (StartOf(5)) {
-		} else SynErr(48);
+			CallArgsResult = null; HasCallTail = false; 
+		} else SynErr(46);
 	}
 
 
@@ -390,7 +487,7 @@ public class Parser {
 		la = new Token();
 		la.val = "";		
 		Get();
-		MyLang();
+		MyLangAST();
 		Expect(0);
 
 	}
@@ -457,13 +554,11 @@ public class Errors {
 			case 39: s = "\"self\" expected"; break;
 			case 40: s = "??? expected"; break;
 			case 41: s = "invalid Type"; break;
-			case 42: s = "invalid Params"; break;
-			case 43: s = "invalid Statement"; break;
-			case 44: s = "invalid RHS"; break;
-			case 45: s = "invalid Args"; break;
-			case 46: s = "invalid UnaryExp"; break;
-			case 47: s = "invalid Primary"; break;
-			case 48: s = "invalid PrimaryTail"; break;
+			case 42: s = "invalid Statement"; break;
+			case 43: s = "invalid RHS"; break;
+			case 44: s = "invalid UnaryExp"; break;
+			case 45: s = "invalid Primary"; break;
+			case 46: s = "invalid PrimaryTail"; break;
 
 			default: s = "error " + n; break;
 		}
@@ -493,4 +588,5 @@ public class Errors {
 
 public class FatalError: Exception {
 	public FatalError(string m): base(m) {}
+}
 }

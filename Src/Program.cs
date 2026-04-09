@@ -3,11 +3,12 @@ using System.IO;
 
 if (args.Length == 0)
 {
-	Console.WriteLine("Usage: dotnet run --project Src -- <path-to-.simtl-file>");
+	Console.WriteLine("Usage: dotnet run --project Src -- [--ast] <path-to-.simtl-file>");
 	return;
 }
 
-var inputPath = args[0];
+var useAst = args.Length >= 2 && args[0] == "--ast";
+var inputPath = useAst ? args[1] : args[0];
 if (!File.Exists(inputPath))
 {
 	Console.Error.WriteLine($"Input file not found: {inputPath}");
@@ -17,18 +18,41 @@ if (!File.Exists(inputPath))
 
 try
 {
-	var scanner = new Scanner(inputPath);
-	var parser = new Parser(scanner);
-	parser.Parse();
-
-	if (parser.errors.count == 0)
+	if (useAst)
 	{
-		Console.WriteLine($"Parse OK: {inputPath}");
+		var scanner = new MyLangAstGen.Scanner(inputPath);
+		var parser = new MyLangAstGen.Parser(scanner);
+		parser.Parse();
+
+		if (parser.errors.count == 0)
+		{
+			Console.WriteLine($"Parse OK (AST): {inputPath}");
+			if (parser.ProgramResult != null)
+			{
+				Console.WriteLine(AstPrinter.Print(parser.ProgramResult));
+			}
+		}
+		else
+		{
+			Console.Error.WriteLine($"Parse failed with {parser.errors.count} error(s).");
+			Environment.Exit(1);
+		}
 	}
 	else
 	{
-		Console.Error.WriteLine($"Parse failed with {parser.errors.count} error(s).");
-		Environment.Exit(1);
+		var scanner = new Scanner(inputPath);
+		var parser = new Parser(scanner);
+		parser.Parse();
+
+		if (parser.errors.count == 0)
+		{
+			Console.WriteLine($"Parse OK: {inputPath}");
+		}
+		else
+		{
+			Console.Error.WriteLine($"Parse failed with {parser.errors.count} error(s).");
+			Environment.Exit(1);
+		}
 	}
 }
 catch (Exception ex)

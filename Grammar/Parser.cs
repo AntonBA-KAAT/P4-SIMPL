@@ -79,7 +79,7 @@ public class Parser {
 	}
 
 	
-	void MyLang() {
+	void MyLangAST() {
 		while (la.kind == 3) {
 			Function();
 		}
@@ -390,7 +390,7 @@ public class Parser {
 		la = new Token();
 		la.val = "";		
 		Get();
-		MyLang();
+		MyLangAST();
 		Expect(0);
 
 	}
