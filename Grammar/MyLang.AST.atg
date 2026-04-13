@@ -1,0 +1,192 @@
+COMPILER MyLangAST
+
+public ProgramNode ProgramResult;
+public System.Collections.Generic.List<FunctionNode> FunctionsResult;
+public FunctionNode FunctionResult;
+public System.Collections.Generic.List<ParamNode> ParamsResult;
+public ParamNode ParamResult;
+public TypeNode TypeResult;
+public System.Collections.Generic.List<StatementNode> StatementListResult;
+public StatementNode StatementResult;
+public RhsNode RhsResult;
+public System.Collections.Generic.List<ExprNode> ArgsResult;
+public ExprNode ExprResult;
+public System.Collections.Generic.List<ExprNode> CallArgsResult;
+public bool HasCallTail;
+
+CHARACTERS
+  letter = 'A'..'Z' + 'a'..'z'.
+  digit  = '0'..'9'.
+  ws     = ' ' + '\t' + '\r' + '\n'.
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE ws
+
+PRODUCTIONS
+
+MyLangAST =
+  (. FunctionsResult = new System.Collections.Generic.List<FunctionNode>(); .)
+  { Function (. FunctionsResult.Add(FunctionResult); .) }
+  (. ProgramResult = new ProgramNode(FunctionsResult); .)
+.
+
+Function =
+  (. string functionName; TypeNode returnType; .)
+  "func" Type (. returnType = TypeResult; .) ident (. functionName = t.val; .) "(" Params ")" "{" StatementList "}"
+  (. FunctionResult = new FunctionNode(returnType, functionName, ParamsResult, StatementListResult); .)
+.
+
+Params =
+  (. var paramsList = new System.Collections.Generic.List<ParamNode>(); .)
+  [ Param (. paramsList.Add(ParamResult); .) { "," Param (. paramsList.Add(ParamResult); .) } ]
+  (. ParamsResult = paramsList; .)
+.
+
+Param =
+  (. string paramName; .)
+  Type ident (. paramName = t.val; .)
+  (. ParamResult = new ParamNode(TypeResult, paramName); .)
+.
+
+Type =
+    "Int"  (. TypeResult = TypeNode.Int; .)
+  | "Bool" (. TypeResult = TypeNode.Bool; .)
+  | "Pid"  (. TypeResult = TypeNode.Pid; .)
+.
+
+StatementList =
+  (. var statements = new System.Collections.Generic.List<StatementNode>(); .)
+  [ Statement (. statements.Add(StatementResult); .) { ";" Statement (. statements.Add(StatementResult); .) } ]
+  (. StatementListResult = statements; .)
+.
+
+Statement =
+    IfStmt
+  | WhileStmt
+  | AssignStmt
+  | DeclStmt
+  | PrintStmt
+  | ReturnStmt
+  | SendStmt
+  | SkipStmt
+.
+
+IfStmt =
+  (. ExprNode condition; System.Collections.Generic.List<StatementNode> thenBranch = null; System.Collections.Generic.List<StatementNode> elseBranch = null; .)
+  "if" "(" Expr (. condition = ExprResult; .) ")" "{" StatementList (. thenBranch = StatementListResult; .) "}" "else" "{" StatementList (. elseBranch = StatementListResult; .) "}"
+  (. StatementResult = new IfNode(condition, thenBranch, elseBranch); .)
+.
+
+WhileStmt =
+  (. ExprNode condition; System.Collections.Generic.List<StatementNode> body = null; .)
+  "while" "(" Expr (. condition = ExprResult; .) ")" "{" StatementList (. body = StatementListResult; .) "}"
+  (. StatementResult = new WhileNode(condition, body); .)
+.
+
+AssignStmt =
+  (. string name; .)
+  ident (. name = t.val; .) "=" RHS
+  (. StatementResult = new AssignNode(new VarNode(name), RhsResult); .)
+.
+
+DeclStmt =
+  (. string name; .)
+  Type ident (. name = t.val; .) "=" Expr
+  (. StatementResult = new DeclNode(TypeResult, name, ExprResult); .)
+.
+
+PrintStmt =
+  "print" "(" Expr ")"
+  (. StatementResult = new PrintNode(ExprResult); .)
+.
+
+ReturnStmt =
+  "return" Expr
+  (. StatementResult = new ReturnNode(ExprResult); .)
+.
+
+SendStmt =
+  (. ExprNode message; ExprNode target; .)
+  "send" Expr (. message = ExprResult; .) "to" Expr (. target = ExprResult; .)
+  (. StatementResult = new SendNode(message, target); .)
+.
+
+SkipStmt =
+  "skip"
+  (. StatementResult = new SkipNode(); .)
+.
+
+RHS =
+    "receive" "(" ")" (. RhsResult = new ReceiveRhsNode(); .)
+  | "spawn" ident (. string spawnName = t.val; .) "(" Args ")" (. RhsResult = new SpawnRhsNode(spawnName, ArgsResult); .)
+  | Expr (. RhsResult = new ExprRhsNode(ExprResult); .)
+.
+
+Args =
+  (. var args = new System.Collections.Generic.List<ExprNode>(); .)
+  [ Expr (. args.Add(ExprResult); .) { "," Expr (. args.Add(ExprResult); .) } ]
+  (. ArgsResult = args; .)
+.
+
+Expr = OrExp .
+
+OrExp =
+  AndExp (. ExprNode left = ExprResult; .)
+  { "||" AndExp (. left = new BinaryExprNode("||", left, ExprResult); .) }
+  (. ExprResult = left; .)
+.
+
+AndExp =
+  EqExp (. ExprNode left = ExprResult; .)
+  { "&&" EqExp (. left = new BinaryExprNode("&&", left, ExprResult); .) }
+  (. ExprResult = left; .)
+.
+
+EqExp =
+  RelExp (. ExprNode left = ExprResult; .)
+  [ ("==" | "!=") (. string op = t.val; .) RelExp (. left = new BinaryExprNode(op, left, ExprResult); .) ]
+  (. ExprResult = left; .)
+.
+
+RelExp =
+  AddExp (. ExprNode left = ExprResult; .)
+  [ ("<" | ">" | "<=" | ">=") (. string op = t.val; .) AddExp (. left = new BinaryExprNode(op, left, ExprResult); .) ]
+  (. ExprResult = left; .)
+.
+
+AddExp =
+  MulExp (. ExprNode left = ExprResult; .)
+  { ("+" | "-") (. string op = t.val; .) MulExp (. left = new BinaryExprNode(op, left, ExprResult); .) }
+  (. ExprResult = left; .)
+.
+
+MulExp =
+  UnaryExp (. ExprNode left = ExprResult; .)
+  { ("*" | "/") (. string op = t.val; .) UnaryExp (. left = new BinaryExprNode(op, left, ExprResult); .) }
+  (. ExprResult = left; .)
+.
+
+UnaryExp =
+    "!" UnaryExp (. ExprResult = new UnaryExprNode("!", ExprResult); .)
+  | "-" UnaryExp (. ExprResult = new UnaryExprNode("-", ExprResult); .)
+  | Primary
+.
+
+Primary =
+    number (. ExprResult = new NumberNode(t.val); .)
+  | "true" (. ExprResult = new BoolNode(true); .)
+  | "false" (. ExprResult = new BoolNode(false); .)
+  | ident (. string name = t.val; .) PrimaryTail (. ExprResult = HasCallTail ? new CallExprNode(name, CallArgsResult) : new VarNode(name); .)
+  | "self" (. ExprResult = new SelfNode(); .)
+  | "(" Expr ")"
+.
+
+PrimaryTail =
+    "(" Args (. CallArgsResult = ArgsResult; HasCallTail = true; .) ")"
+  | (. CallArgsResult = null; HasCallTail = false; .)
+.
+
+END MyLangAST.

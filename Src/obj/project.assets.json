@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\nikla\\CODING DAMN\\P4-SIMTL\\Src\\Src.csproj",
+      "projectUniqueName": "C:\\Users\\nikla\\OneDrive\\Skrivebord\\program\\P4\\P4-SIMTL\\Src\\Src.csproj",
       "projectName": "Src",
-      "projectPath": "C:\\Users\\nikla\\CODING DAMN\\P4-SIMTL\\Src\\Src.csproj",
+      "projectPath": "C:\\Users\\nikla\\OneDrive\\Skrivebord\\program\\P4\\P4-SIMTL\\Src\\Src.csproj",
       "packagesPath": "C:\\Users\\nikla\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\nikla\\CODING DAMN\\P4-SIMTL\\Src\\obj\\",
+      "outputPath": "C:\\Users\\nikla\\OneDrive\\Skrivebord\\program\\P4\\P4-SIMTL\\Src\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\nikla\\AppData\\Roaming\\NuGet\\NuGet.Config"

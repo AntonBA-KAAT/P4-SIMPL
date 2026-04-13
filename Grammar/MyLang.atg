@@ -3,26 +3,139 @@ COMPILER MyLang
 CHARACTERS
   letter = 'A'..'Z' + 'a'..'z'.
   digit  = '0'..'9'.
+  ws     = ' ' + '\t' + '\r' + '\n'.
 
 TOKENS
   ident  = letter {letter | digit}.
   number = digit {digit}.
 
+IGNORE ws
+
 PRODUCTIONS
 
-MyLang = { Statement } .
+MyLang = { Function } .
 
-Statement =
-    ident "=" Expr ";"
-  | "print" "(" Expr ")" ";"
+Function =
+  "func" Type ident "(" Params ")" "{" StatementList "}"
 .
 
-Expr   = Term { ("+" | "-") Term } .
-Term   = Factor { ("*" | "/") Factor } .
-Factor =
-    ident
-  | number
+Params =
+    Param { "," Param }
+  |
+.
+
+Param =
+  Type ident
+.
+
+Type =
+    "Int"
+  | "Bool"
+  | "Pid"
+.
+
+StatementList =
+    [ Statement { ";" Statement } ]
+.
+
+Statement =
+    IfStmt
+  | WhileStmt
+  | AssignStmt
+  | DeclStmt
+  | PrintStmt
+  | ReturnStmt
+  | SendStmt
+  | SkipStmt
+.
+
+IfStmt =
+  "if" "(" Expr ")" "{" StatementList "}" "else" "{" StatementList "}"
+.
+
+WhileStmt =
+  "while" "(" Expr ")" "{" StatementList "}"
+.
+
+AssignStmt =
+  ident "=" RHS
+.
+
+DeclStmt =
+  Type ident "=" Expr
+.
+
+PrintStmt =
+  "print" "(" Expr ")"
+.
+
+ReturnStmt =
+  "return" Expr
+.
+
+SendStmt =
+  "send" Expr "to" Expr
+.
+
+SkipStmt =
+  "skip"
+.
+
+RHS =
+    "receive" "(" ")"
+  | "spawn" ident "(" Args ")"
+  | Expr
+.
+
+Args =
+    Expr { "," Expr }
+  |
+.
+
+Expr = OrExp .
+
+OrExp =
+  AndExp { "||" AndExp }
+.
+
+AndExp =
+  EqExp { "&&" EqExp }
+.
+
+EqExp =
+  RelExp [ ("==" | "!=") RelExp ]
+.
+
+RelExp =
+  AddExp [ ("<" | ">" | "<=" | ">=") AddExp ]
+.
+
+AddExp =
+  MulExp { ("+" | "-") MulExp }
+.
+
+MulExp =
+  UnaryExp { ("*" | "/") UnaryExp }
+.
+
+UnaryExp =
+    "!" UnaryExp
+  | "-" UnaryExp
+  | Primary
+.
+
+Primary =
+    number
+  | "true"
+  | "false"
+  | ident PrimaryTail
+  | "self"
   | "(" Expr ")"
+.
+
+PrimaryTail =
+    "(" Args ")"
+  |
 .
 
 END MyLang.
