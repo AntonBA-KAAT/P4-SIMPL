@@ -57,7 +57,7 @@ Type =
 
 StmtSeq =
   (. var statements = new System.Collections.Generic.List<StatementNode>(); .)
-  { Statement (. statements.Add(StatementResult); .) [ ";" ] }
+  [ Statement (. statements.Add(StatementResult); .) { ";" Statement (. statements.Add(StatementResult); .) } [ ";" ] ]
   (. StmtSeqResult = statements; .)
 .
 

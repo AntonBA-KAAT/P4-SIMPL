@@ -148,9 +148,14 @@ public ExprNode ExprResult;
 
 	void StmtSeq() {
 		var statements = new System.Collections.Generic.List<StatementNode>(); 
-		while (StartOf(1)) {
+		if (StartOf(1)) {
 			Statement();
 			statements.Add(StatementResult); 
+			while (la.kind == 12) {
+				Get();
+				Statement();
+				statements.Add(StatementResult); 
+			}
 			if (la.kind == 12) {
 				Get();
 			}

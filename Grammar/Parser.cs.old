@@ -7,7 +7,7 @@ public class Parser {
 	public const int _EOF = 0;
 	public const int _ident = 1;
 	public const int _number = 2;
-	public const int maxT = 40;
+	public const int maxT = 41;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -110,7 +110,7 @@ public class Parser {
 			Get();
 		} else if (la.kind == 11) {
 			Get();
-		} else SynErr(41);
+		} else SynErr(42);
 	}
 
 	void Params() {
@@ -169,7 +169,7 @@ public class Parser {
 			SendStmt();
 			break;
 		}
-		default: SynErr(42); break;
+		default: SynErr(43); break;
 		}
 	}
 
@@ -253,14 +253,15 @@ public class Parser {
 				Args();
 			}
 			Expect(5);
-		} else if (la.kind == 1) {
+		} else if (la.kind == 24) {
 			Get();
+			Expect(1);
 			Expect(4);
 			if (StartOf(2)) {
 				Args();
 			}
 			Expect(5);
-		} else SynErr(43);
+		} else SynErr(44);
 	}
 
 	void Args() {
@@ -273,7 +274,7 @@ public class Parser {
 
 	void OrExp() {
 		AndExp();
-		while (la.kind == 24) {
+		while (la.kind == 25) {
 			Get();
 			AndExp();
 		}
@@ -281,7 +282,7 @@ public class Parser {
 
 	void AndExp() {
 		EqExp();
-		while (la.kind == 25) {
+		while (la.kind == 26) {
 			Get();
 			EqExp();
 		}
@@ -289,8 +290,8 @@ public class Parser {
 
 	void EqExp() {
 		RelExp();
-		while (la.kind == 26 || la.kind == 27) {
-			if (la.kind == 26) {
+		while (la.kind == 27 || la.kind == 28) {
+			if (la.kind == 27) {
 				Get();
 			} else {
 				Get();
@@ -302,11 +303,11 @@ public class Parser {
 	void RelExp() {
 		AddExp();
 		while (StartOf(3)) {
-			if (la.kind == 28) {
-				Get();
-			} else if (la.kind == 29) {
+			if (la.kind == 29) {
 				Get();
 			} else if (la.kind == 30) {
+				Get();
+			} else if (la.kind == 31) {
 				Get();
 			} else {
 				Get();
@@ -317,8 +318,8 @@ public class Parser {
 
 	void AddExp() {
 		MulExp();
-		while (la.kind == 32 || la.kind == 33) {
-			if (la.kind == 32) {
+		while (la.kind == 33 || la.kind == 34) {
+			if (la.kind == 33) {
 				Get();
 			} else {
 				Get();
@@ -329,8 +330,8 @@ public class Parser {
 
 	void MulExp() {
 		UnaryExp();
-		while (la.kind == 34 || la.kind == 35) {
-			if (la.kind == 34) {
+		while (la.kind == 35 || la.kind == 36) {
+			if (la.kind == 35) {
 				Get();
 			} else {
 				Get();
@@ -340,15 +341,15 @@ public class Parser {
 	}
 
 	void UnaryExp() {
-		if (la.kind == 36) {
+		if (la.kind == 37) {
 			Get();
 			UnaryExp();
-		} else if (la.kind == 33) {
+		} else if (la.kind == 34) {
 			Get();
 			UnaryExp();
 		} else if (StartOf(4)) {
 			Primary();
-		} else SynErr(44);
+		} else SynErr(45);
 	}
 
 	void Primary() {
@@ -357,15 +358,15 @@ public class Parser {
 			Get();
 			break;
 		}
-		case 37: {
-			Get();
-			break;
-		}
 		case 38: {
 			Get();
 			break;
 		}
 		case 39: {
+			Get();
+			break;
+		}
+		case 40: {
 			Get();
 			break;
 		}
@@ -379,7 +380,7 @@ public class Parser {
 			Expect(5);
 			break;
 		}
-		default: SynErr(45); break;
+		default: SynErr(46); break;
 		}
 	}
 
@@ -395,11 +396,11 @@ public class Parser {
 	}
 	
 	static readonly bool[,] set = {
-		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_T,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _x,_T,_x,_T, _T,_x,_T,_T, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_x,_x, _T,_T,_T,_T, _x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _x,_x}
+		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_T,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _x,_T,_x,_T, _T,_x,_T,_T, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_x, _x,_T,_T,_T, _T,_x,_x},
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_x,_x}
 
 	};
 } // end Parser
@@ -437,28 +438,29 @@ public class Errors {
 			case 21: s = "\"to\" expected"; break;
 			case 22: s = "\"receive\" expected"; break;
 			case 23: s = "\"spawn\" expected"; break;
-			case 24: s = "\"||\" expected"; break;
-			case 25: s = "\"&&\" expected"; break;
-			case 26: s = "\"==\" expected"; break;
-			case 27: s = "\"!=\" expected"; break;
-			case 28: s = "\"<\" expected"; break;
-			case 29: s = "\">\" expected"; break;
-			case 30: s = "\"<=\" expected"; break;
-			case 31: s = "\">=\" expected"; break;
-			case 32: s = "\"+\" expected"; break;
-			case 33: s = "\"-\" expected"; break;
-			case 34: s = "\"*\" expected"; break;
-			case 35: s = "\"/\" expected"; break;
-			case 36: s = "\"!\" expected"; break;
-			case 37: s = "\"true\" expected"; break;
-			case 38: s = "\"false\" expected"; break;
-			case 39: s = "\"self\" expected"; break;
-			case 40: s = "??? expected"; break;
-			case 41: s = "invalid Type"; break;
-			case 42: s = "invalid Statement"; break;
-			case 43: s = "invalid RHS"; break;
-			case 44: s = "invalid UnaryExp"; break;
-			case 45: s = "invalid Primary"; break;
+			case 24: s = "\"call\" expected"; break;
+			case 25: s = "\"||\" expected"; break;
+			case 26: s = "\"&&\" expected"; break;
+			case 27: s = "\"==\" expected"; break;
+			case 28: s = "\"!=\" expected"; break;
+			case 29: s = "\"<\" expected"; break;
+			case 30: s = "\">\" expected"; break;
+			case 31: s = "\"<=\" expected"; break;
+			case 32: s = "\">=\" expected"; break;
+			case 33: s = "\"+\" expected"; break;
+			case 34: s = "\"-\" expected"; break;
+			case 35: s = "\"*\" expected"; break;
+			case 36: s = "\"/\" expected"; break;
+			case 37: s = "\"!\" expected"; break;
+			case 38: s = "\"true\" expected"; break;
+			case 39: s = "\"false\" expected"; break;
+			case 40: s = "\"self\" expected"; break;
+			case 41: s = "??? expected"; break;
+			case 42: s = "invalid Type"; break;
+			case 43: s = "invalid Statement"; break;
+			case 44: s = "invalid RHS"; break;
+			case 45: s = "invalid UnaryExp"; break;
+			case 46: s = "invalid Primary"; break;
 
 			default: s = "error " + n; break;
 		}

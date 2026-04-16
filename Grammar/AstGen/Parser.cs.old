@@ -110,10 +110,10 @@ public ExprNode ExprResult;
 		Expect(1);
 		functionName = t.val; 
 		Expect(4);
+		ParamsResult = new System.Collections.Generic.List<ParamNode>(); 
 		if (la.kind == 9 || la.kind == 10 || la.kind == 11) {
 			Params();
 		}
-		if (ParamsResult == null) ParamsResult = new System.Collections.Generic.List<ParamNode>(); 
 		Expect(5);
 		Expect(6);
 		StmtSeq();
@@ -148,9 +148,14 @@ public ExprNode ExprResult;
 
 	void StmtSeq() {
 		var statements = new System.Collections.Generic.List<StatementNode>(); 
-		while (StartOf(1)) {
+		if (StartOf(1)) {
 			Statement();
 			statements.Add(StatementResult); 
+			while (la.kind == 12) {
+				Get();
+				Statement();
+				statements.Add(StatementResult); 
+			}
 			if (la.kind == 12) {
 				Get();
 			}
