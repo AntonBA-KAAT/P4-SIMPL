@@ -9,7 +9,7 @@ public class Parser {
 	public const int _EOF = 0;
 	public const int _ident = 1;
 	public const int _number = 2;
-	public const int maxT = 40;
+	public const int maxT = 41;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -28,13 +28,11 @@ public FunctionNode FunctionResult;
 public System.Collections.Generic.List<ParamNode> ParamsResult;
 public ParamNode ParamResult;
 public TypeNode TypeResult;
-public System.Collections.Generic.List<StatementNode> StatementListResult;
+public System.Collections.Generic.List<StatementNode> StmtSeqResult;
 public StatementNode StatementResult;
 public RhsNode RhsResult;
 public System.Collections.Generic.List<ExprNode> ArgsResult;
 public ExprNode ExprResult;
-public System.Collections.Generic.List<ExprNode> CallArgsResult;
-public bool HasCallTail;
 
 
 
@@ -98,13 +96,13 @@ public bool HasCallTail;
 	void MyLangAST() {
 		FunctionsResult = new System.Collections.Generic.List<FunctionNode>(); 
 		while (la.kind == 3) {
-			Function();
+			FunctionDecl();
 			FunctionsResult.Add(FunctionResult); 
 		}
 		ProgramResult = new ProgramNode(FunctionsResult); 
 	}
 
-	void Function() {
+	void FunctionDecl() {
 		string functionName; TypeNode returnType; 
 		Expect(3);
 		Type();
@@ -112,12 +110,15 @@ public bool HasCallTail;
 		Expect(1);
 		functionName = t.val; 
 		Expect(4);
-		Params();
+		if (la.kind == 9 || la.kind == 10 || la.kind == 11) {
+			Params();
+		}
+		if (ParamsResult == null) ParamsResult = new System.Collections.Generic.List<ParamNode>(); 
 		Expect(5);
 		Expect(6);
-		StatementList();
+		StmtSeq();
 		Expect(7);
-		FunctionResult = new FunctionNode(returnType, functionName, ParamsResult, StatementListResult); 
+		FunctionResult = new FunctionNode(returnType, functionName, ParamsResult, StmtSeqResult); 
 	}
 
 	void Type() {
@@ -130,35 +131,31 @@ public bool HasCallTail;
 		} else if (la.kind == 11) {
 			Get();
 			TypeResult = TypeNode.Pid; 
-		} else SynErr(41);
+		} else SynErr(42);
 	}
 
 	void Params() {
 		var paramsList = new System.Collections.Generic.List<ParamNode>(); 
-		if (la.kind == 9 || la.kind == 10 || la.kind == 11) {
+		Param();
+		paramsList.Add(ParamResult); 
+		while (la.kind == 8) {
+			Get();
 			Param();
 			paramsList.Add(ParamResult); 
-			while (la.kind == 8) {
-				Get();
-				Param();
-				paramsList.Add(ParamResult); 
-			}
 		}
 		ParamsResult = paramsList; 
 	}
 
-	void StatementList() {
+	void StmtSeq() {
 		var statements = new System.Collections.Generic.List<StatementNode>(); 
-		if (StartOf(1)) {
+		while (StartOf(1)) {
 			Statement();
 			statements.Add(StatementResult); 
-			while (la.kind == 12) {
+			if (la.kind == 12) {
 				Get();
-				Statement();
-				statements.Add(StatementResult); 
 			}
 		}
-		StatementListResult = statements; 
+		StmtSeqResult = statements; 
 	}
 
 	void Param() {
@@ -203,7 +200,7 @@ public bool HasCallTail;
 			SkipStmt();
 			break;
 		}
-		default: SynErr(42); break;
+		default: SynErr(43); break;
 		}
 	}
 
@@ -215,13 +212,13 @@ public bool HasCallTail;
 		condition = ExprResult; 
 		Expect(5);
 		Expect(6);
-		StatementList();
-		thenBranch = StatementListResult; 
+		StmtSeq();
+		thenBranch = StmtSeqResult; 
 		Expect(7);
 		Expect(14);
 		Expect(6);
-		StatementList();
-		elseBranch = StatementListResult; 
+		StmtSeq();
+		elseBranch = StmtSeqResult; 
 		Expect(7);
 		StatementResult = new IfNode(condition, thenBranch, elseBranch); 
 	}
@@ -234,8 +231,8 @@ public bool HasCallTail;
 		condition = ExprResult; 
 		Expect(5);
 		Expect(6);
-		StatementList();
-		body = StatementListResult; 
+		StmtSeq();
+		body = StmtSeqResult; 
 		Expect(7);
 		StatementResult = new WhileNode(condition, body); 
 	}
@@ -246,7 +243,7 @@ public bool HasCallTail;
 		name = t.val; 
 		Expect(16);
 		RHS();
-		StatementResult = new AssignNode(name, RhsResult); 
+		StatementResult = new AssignNode(new VarNode(name), RhsResult); 
 	}
 
 	void DeclStmt() {
@@ -255,8 +252,8 @@ public bool HasCallTail;
 		Expect(1);
 		name = t.val; 
 		Expect(16);
-		Expr();
-		StatementResult = new DeclNode(TypeResult, name, ExprResult); 
+		RHS();
+		StatementResult = new DeclNode(TypeResult, name, RhsResult); 
 	}
 
 	void PrintStmt() {
@@ -297,32 +294,45 @@ public bool HasCallTail;
 		if (la.kind == 22) {
 			Get();
 			Expect(4);
+			Expr();
 			Expect(5);
-			RhsResult = new ReceiveRhsNode(); 
+			RhsResult = new ReceiveRhsNode(ExprResult); 
 		} else if (la.kind == 23) {
 			Get();
 			Expect(1);
 			string spawnName = t.val; 
 			Expect(4);
-			Args();
+			if (StartOf(2)) {
+				Args();
+			}
+			if (ArgsResult == null) ArgsResult = new System.Collections.Generic.List<ExprNode>(); 
 			Expect(5);
 			RhsResult = new SpawnRhsNode(spawnName, ArgsResult); 
+		} else if (la.kind == 24) {
+			Get();
+			Expect(1);
+			string callName = t.val; 
+			Expect(4);
+			if (StartOf(2)) {
+				Args();
+			}
+			if (ArgsResult == null) ArgsResult = new System.Collections.Generic.List<ExprNode>(); 
+			Expect(5);
+			RhsResult = new CallRhsNode(callName, ArgsResult); 
 		} else if (StartOf(2)) {
 			Expr();
 			RhsResult = new ExprRhsNode(ExprResult); 
-		} else SynErr(43);
+		} else SynErr(44);
 	}
 
 	void Args() {
 		var args = new System.Collections.Generic.List<ExprNode>(); 
-		if (StartOf(2)) {
+		Expr();
+		args.Add(ExprResult); 
+		while (la.kind == 8) {
+			Get();
 			Expr();
 			args.Add(ExprResult); 
-			while (la.kind == 8) {
-				Get();
-				Expr();
-				args.Add(ExprResult); 
-			}
 		}
 		ArgsResult = args; 
 	}
@@ -330,7 +340,7 @@ public bool HasCallTail;
 	void OrExp() {
 		AndExp();
 		ExprNode left = ExprResult; 
-		while (la.kind == 24) {
+		while (la.kind == 25) {
 			Get();
 			AndExp();
 			left = new BinaryExprNode("||", left, ExprResult); 
@@ -341,7 +351,7 @@ public bool HasCallTail;
 	void AndExp() {
 		EqExp();
 		ExprNode left = ExprResult; 
-		while (la.kind == 25) {
+		while (la.kind == 26) {
 			Get();
 			EqExp();
 			left = new BinaryExprNode("&&", left, ExprResult); 
@@ -352,8 +362,8 @@ public bool HasCallTail;
 	void EqExp() {
 		RelExp();
 		ExprNode left = ExprResult; 
-		if (la.kind == 26 || la.kind == 27) {
-			if (la.kind == 26) {
+		while (la.kind == 27 || la.kind == 28) {
+			if (la.kind == 27) {
 				Get();
 			} else {
 				Get();
@@ -368,12 +378,12 @@ public bool HasCallTail;
 	void RelExp() {
 		AddExp();
 		ExprNode left = ExprResult; 
-		if (StartOf(3)) {
-			if (la.kind == 28) {
-				Get();
-			} else if (la.kind == 29) {
+		while (StartOf(3)) {
+			if (la.kind == 29) {
 				Get();
 			} else if (la.kind == 30) {
+				Get();
+			} else if (la.kind == 31) {
 				Get();
 			} else {
 				Get();
@@ -388,8 +398,8 @@ public bool HasCallTail;
 	void AddExp() {
 		MulExp();
 		ExprNode left = ExprResult; 
-		while (la.kind == 32 || la.kind == 33) {
-			if (la.kind == 32) {
+		while (la.kind == 33 || la.kind == 34) {
+			if (la.kind == 33) {
 				Get();
 			} else {
 				Get();
@@ -404,8 +414,8 @@ public bool HasCallTail;
 	void MulExp() {
 		UnaryExp();
 		ExprNode left = ExprResult; 
-		while (la.kind == 34 || la.kind == 35) {
-			if (la.kind == 34) {
+		while (la.kind == 35 || la.kind == 36) {
+			if (la.kind == 35) {
 				Get();
 			} else {
 				Get();
@@ -418,17 +428,17 @@ public bool HasCallTail;
 	}
 
 	void UnaryExp() {
-		if (la.kind == 36) {
+		if (la.kind == 37) {
 			Get();
 			UnaryExp();
 			ExprResult = new UnaryExprNode("!", ExprResult); 
-		} else if (la.kind == 33) {
+		} else if (la.kind == 34) {
 			Get();
 			UnaryExp();
 			ExprResult = new UnaryExprNode("-", ExprResult); 
 		} else if (StartOf(4)) {
 			Primary();
-		} else SynErr(44);
+		} else SynErr(45);
 	}
 
 	void Primary() {
@@ -438,24 +448,22 @@ public bool HasCallTail;
 			ExprResult = new NumberNode(t.val); 
 			break;
 		}
-		case 37: {
+		case 38: {
 			Get();
 			ExprResult = new BoolNode(true); 
 			break;
 		}
-		case 38: {
+		case 39: {
 			Get();
 			ExprResult = new BoolNode(false); 
 			break;
 		}
 		case 1: {
 			Get();
-			string name = t.val; 
-			PrimaryTail();
-			ExprResult = HasCallTail ? new CallExprNode(name, CallArgsResult) : new VarNode(name); 
+			ExprResult = new VarNode(t.val); 
 			break;
 		}
-		case 39: {
+		case 40: {
 			Get();
 			ExprResult = new SelfNode(); 
 			break;
@@ -466,19 +474,8 @@ public bool HasCallTail;
 			Expect(5);
 			break;
 		}
-		default: SynErr(45); break;
+		default: SynErr(46); break;
 		}
-	}
-
-	void PrimaryTail() {
-		if (la.kind == 4) {
-			Get();
-			Args();
-			CallArgsResult = ArgsResult; HasCallTail = true; 
-			Expect(5);
-		} else if (StartOf(5)) {
-			CallArgsResult = null; HasCallTail = false; 
-		} else SynErr(46);
 	}
 
 
@@ -493,12 +490,11 @@ public bool HasCallTail;
 	}
 	
 	static readonly bool[,] set = {
-		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_T,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _x,_T,_x,_T, _x,_T,_T,_T, _x,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_x,_x, _T,_T,_T,_T, _x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _x,_x},
-		{_x,_x,_x,_x, _x,_T,_x,_T, _T,_x,_x,_x, _T,_x,_x,_x, _x,_x,_x,_x, _T,_x,_x,_x, _T,_T,_T,_T, _T,_T,_T,_T, _T,_T,_T,_T, _x,_x,_x,_x, _x,_x}
+		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_T,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _x,_T,_x,_T, _x,_T,_T,_T, _x,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_x, _x,_T,_T,_T, _T,_x,_x},
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_x,_x}
 
 	};
 } // end Parser
@@ -536,29 +532,29 @@ public class Errors {
 			case 21: s = "\"skip\" expected"; break;
 			case 22: s = "\"receive\" expected"; break;
 			case 23: s = "\"spawn\" expected"; break;
-			case 24: s = "\"||\" expected"; break;
-			case 25: s = "\"&&\" expected"; break;
-			case 26: s = "\"==\" expected"; break;
-			case 27: s = "\"!=\" expected"; break;
-			case 28: s = "\"<\" expected"; break;
-			case 29: s = "\">\" expected"; break;
-			case 30: s = "\"<=\" expected"; break;
-			case 31: s = "\">=\" expected"; break;
-			case 32: s = "\"+\" expected"; break;
-			case 33: s = "\"-\" expected"; break;
-			case 34: s = "\"*\" expected"; break;
-			case 35: s = "\"/\" expected"; break;
-			case 36: s = "\"!\" expected"; break;
-			case 37: s = "\"true\" expected"; break;
-			case 38: s = "\"false\" expected"; break;
-			case 39: s = "\"self\" expected"; break;
-			case 40: s = "??? expected"; break;
-			case 41: s = "invalid Type"; break;
-			case 42: s = "invalid Statement"; break;
-			case 43: s = "invalid RHS"; break;
-			case 44: s = "invalid UnaryExp"; break;
-			case 45: s = "invalid Primary"; break;
-			case 46: s = "invalid PrimaryTail"; break;
+			case 24: s = "\"call\" expected"; break;
+			case 25: s = "\"||\" expected"; break;
+			case 26: s = "\"&&\" expected"; break;
+			case 27: s = "\"==\" expected"; break;
+			case 28: s = "\"!=\" expected"; break;
+			case 29: s = "\"<\" expected"; break;
+			case 30: s = "\">\" expected"; break;
+			case 31: s = "\"<=\" expected"; break;
+			case 32: s = "\">=\" expected"; break;
+			case 33: s = "\"+\" expected"; break;
+			case 34: s = "\"-\" expected"; break;
+			case 35: s = "\"*\" expected"; break;
+			case 36: s = "\"/\" expected"; break;
+			case 37: s = "\"!\" expected"; break;
+			case 38: s = "\"true\" expected"; break;
+			case 39: s = "\"false\" expected"; break;
+			case 40: s = "\"self\" expected"; break;
+			case 41: s = "??? expected"; break;
+			case 42: s = "invalid Type"; break;
+			case 43: s = "invalid Statement"; break;
+			case 44: s = "invalid RHS"; break;
+			case 45: s = "invalid UnaryExp"; break;
+			case 46: s = "invalid Primary"; break;
 
 			default: s = "error " + n; break;
 		}

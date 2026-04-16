@@ -1,0 +1,145 @@
+COMPILER SIMTL
+
+CHARACTERS
+  letter    = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit     = "0123456789".
+  newline   = '\n'.
+  cr        = '\r'.
+  tab       = '\t'.
+
+TOKENS
+  ident     = letter { letter | digit | "_" }.
+  number    = digit { digit }.
+
+IGNORE " " + tab + newline + cr
+
+PRODUCTIONS
+
+SIMTL =
+  Program
+.
+
+Program =
+  { FunctionDecl }
+.
+
+FunctionDecl =
+  "func" Type ident "(" [ Params ] ")" "{" StmtSeq "}"
+.
+
+Params =
+  Param { "," Param }
+.
+
+Param =
+  Type ident
+.
+
+Type =
+    "Bool"
+  | "Int"
+  | "Pid"
+.
+
+StmtSeq =
+  { Statement [";"] }
+.
+
+Statement =
+    IfStmt
+  | WhileStmt
+  | SkipStmt
+  | AssignStmt
+  | DeclStmt
+  | PrintStmt
+  | ReturnStmt
+  | SendStmt
+.
+
+IfStmt =
+  "if" "(" Exp ")" "{" StmtSeq "}" "else" "{" StmtSeq "}"
+.
+
+WhileStmt =
+  "while" "(" Exp ")" "{" StmtSeq "}"
+.
+
+SkipStmt =
+  "skip"
+.
+
+AssignStmt =
+  ident "=" RHS
+.
+
+DeclStmt =
+  Type ident "=" RHS
+.
+
+PrintStmt =
+  "print" "(" Exp ")"
+.
+
+ReturnStmt =
+  "return" Exp
+.
+
+SendStmt =
+  "send" Exp "to" Exp
+.
+
+RHS =
+    Exp
+  | "receive" "(" Exp ")"
+  | "spawn" ident "(" [ Args ] ")"
+  | "call" ident "(" [ Args ] ")"
+.
+
+Args =
+  Exp { "," Exp }
+.
+
+Exp =
+  OrExp
+.
+
+OrExp =
+  AndExp { "||" AndExp }
+.
+
+AndExp =
+  EqExp { "&&" EqExp }
+.
+
+EqExp =
+  RelExp { ( "==" | "!=" ) RelExp }
+.
+
+RelExp =
+  AddExp { ( "<" | ">" | "<=" | ">=" ) AddExp }
+.
+
+AddExp =
+  MulExp { ( "+" | "-" ) MulExp }
+.
+
+MulExp =
+  UnaryExp { ( "*" | "/" ) UnaryExp }
+.
+
+UnaryExp =
+    "!" UnaryExp
+  | "-" UnaryExp
+  | Primary
+.
+
+Primary =
+    number
+  | "true"
+  | "false"
+  | "self"
+  | ident
+  | "(" Exp ")"
+.
+
+END SIMTL.

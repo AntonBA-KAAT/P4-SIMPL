@@ -23,7 +23,7 @@ public sealed record WhileNode(ExprNode Condition, IReadOnlyList<StatementNode> 
 
 public sealed record AssignNode(VarNode Name, RhsNode Value) : StatementNode;
 
-public sealed record DeclNode(TypeNode DeclType, string Name, ExprNode Value) : StatementNode;
+public sealed record DeclNode(TypeNode DeclType, string Name, RhsNode Value) : StatementNode;
 
 public sealed record PrintNode(ExprNode Value) : StatementNode;
 
@@ -35,9 +35,11 @@ public sealed record SkipNode() : StatementNode;
 
 public abstract record RhsNode : AstNode;
 
-public sealed record ReceiveRhsNode() : RhsNode;
+public sealed record ReceiveRhsNode(ExprNode Source) : RhsNode;
 
 public sealed record SpawnRhsNode(string Callee, IReadOnlyList<ExprNode> Arguments) : RhsNode;
+
+public sealed record CallRhsNode(string Callee, IReadOnlyList<ExprNode> Arguments) : RhsNode;
 
 public sealed record ExprRhsNode(ExprNode Value) : RhsNode;
 

@@ -47,7 +47,8 @@ public class ParserAstTests
         var fn = Assert.Single(program.Functions);
 
         var decl = Assert.IsType<DeclNode>(fn.Statements[0]);
-        var sum = Assert.IsType<BinaryExprNode>(decl.Value);
+        var exprRhs = Assert.IsType<ExprRhsNode>(decl.Value);
+        var sum = Assert.IsType<BinaryExprNode>(exprRhs.Value);
         Assert.Equal("+", sum.Operator);
         Assert.IsType<NumberNode>(sum.Left);
 
@@ -74,13 +75,14 @@ public class ParserAstTests
     }
 
     [Fact]
-    public void ParsesReceiveAndSpawnRhs()
+    public void ParsesReceiveSpawnAndCallRhs()
     {
         const string source = """
             func Pid worker(Int n) {
                 Pid p = self;
                 p = spawn worker(n);
-                n = receive();
+                n = receive(self);
+                n = call inc(n);
                 return p
             }
             """;
@@ -94,7 +96,13 @@ public class ParserAstTests
         Assert.Single(spawn.Arguments);
 
         var receiveAssign = Assert.IsType<AssignNode>(fn.Statements[2]);
-        Assert.IsType<ReceiveRhsNode>(receiveAssign.Value);
+        var receive = Assert.IsType<ReceiveRhsNode>(receiveAssign.Value);
+        Assert.IsType<SelfNode>(receive.Source);
+
+        var callAssign = Assert.IsType<AssignNode>(fn.Statements[3]);
+        var call = Assert.IsType<CallRhsNode>(callAssign.Value);
+        Assert.Equal("inc", call.Callee);
+        Assert.Single(call.Arguments);
     }
 
     [Fact]
@@ -124,7 +132,7 @@ public class ParserAstTests
     }
 
     [Fact]
-    public void ParsesCallExpressionAndArguments()
+    public void ParsesCallRhsInDeclaration()
     {
         const string source = """
             func Int inc(Int n) {
@@ -132,7 +140,7 @@ public class ParserAstTests
             }
 
             func Int main() {
-                Int x = inc(41);
+                Int x = call inc(41);
                 return x
             }
             """;
@@ -142,10 +150,9 @@ public class ParserAstTests
 
         var main = program.Functions[1];
         var decl = Assert.IsType<DeclNode>(main.Statements[0]);
-        var call = Assert.IsType<CallExprNode>(decl.Value);
-        Assert.Equal("inc", call.Name);
-        Assert.NotNull(call.Arguments);
-        Assert.Single(call.Arguments!);
+        var call = Assert.IsType<CallRhsNode>(decl.Value);
+        Assert.Equal("inc", call.Callee);
+        Assert.Single(call.Arguments);
     }
 
     [Fact]
@@ -162,7 +169,8 @@ public class ParserAstTests
         var fn = Assert.Single(program.Functions);
 
         var decl = Assert.IsType<DeclNode>(fn.Statements[0]);
-        var orExpr = Assert.IsType<BinaryExprNode>(decl.Value);
+        var exprRhs = Assert.IsType<ExprRhsNode>(decl.Value);
+        var orExpr = Assert.IsType<BinaryExprNode>(exprRhs.Value);
         Assert.Equal("||", orExpr.Operator);
 
         var andExpr = Assert.IsType<BinaryExprNode>(orExpr.Right);
@@ -178,7 +186,7 @@ public class ParserAstTests
             }
 
             func Int main() {
-                Int z = add(1, 2);
+                Int z = call add(1, 2);
                 return z
             }
             """;
@@ -191,6 +199,64 @@ public class ParserAstTests
         Assert.Equal(2, add.Parameters.Count);
         Assert.Equal("a", add.Parameters[0].Name);
         Assert.Equal("b", add.Parameters[1].Name);
+
+        var main = program.Functions[1];
+        var decl = Assert.IsType<DeclNode>(main.Statements[0]);
+        var call = Assert.IsType<CallRhsNode>(decl.Value);
+        Assert.Equal("add", call.Callee);
+        Assert.Equal(2, call.Arguments.Count);
+    }
+
+    [Fact]
+    public void AstPrinterProducesExpectedTreeForMixedProgram()
+    {
+        const string source = """
+            func Int add(Int a, Int b) {
+                return a + b
+            }
+
+            func Int main() {
+                Int x = call add(1, 2);
+                Pid p = spawn worker(x);
+                x = receive(self);
+                if (x < 10) { print(x) } else { skip };
+                while (x < 12) { x = x + 1 };
+                send x to self;
+                return x
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var printed = AstPrinter.Print(program);
+
+        var expectedLines = new[]
+        {
+            "Program",
+            "  Function Int add",
+            "    Params (2)",
+            "      Int a",
+            "      Int b",
+            "    Body (1)",
+            "      Return (a + b)",
+            "  Function Int main",
+            "    Params (0)",
+            "    Body (7)",
+            "      Decl Int x = call add(1, 2)",
+            "      Decl Pid p = spawn worker(x)",
+            "      Assign VarNode { Name = x } = receive(self)",
+            "      If (x < 10)",
+            "        Then",
+            "          Print x",
+            "        Else",
+            "          Skip",
+            "      While (x < 12)",
+            "        Assign VarNode { Name = x } = (x + 1)",
+            "      Send x to self",
+            "      Return x"
+        };
+
+        var actualLines = printed.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
+        Assert.Equal(expectedLines, actualLines);
     }
 
     private static ProgramNode ParseProgram(string source)
