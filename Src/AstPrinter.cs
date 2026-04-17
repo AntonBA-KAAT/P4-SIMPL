@@ -49,7 +49,7 @@ public static class AstPrinter
 				sb.AppendLine($"{indent}Assign {n.Name} = {PrintRhs(n.Value)}");
 				break;
 			case DeclNode n:
-				sb.AppendLine($"{indent}Decl {n.DeclType} {n.Name} = {PrintExpr(n.Value)}");
+				sb.AppendLine($"{indent}Decl {n.DeclType} {n.Name} = {PrintRhs(n.Value)}");
 				break;
 			case PrintNode n:
 				sb.AppendLine($"{indent}Print {PrintExpr(n.Value)}");
@@ -68,8 +68,9 @@ public static class AstPrinter
 
 	private static string PrintRhs(RhsNode rhs) => rhs switch
 	{
-		ReceiveRhsNode => "receive()",
+		ReceiveRhsNode r => $"receive({PrintExpr(r.Source)})",
 		SpawnRhsNode s => $"spawn {s.Callee}({string.Join(", ", s.Arguments.Select(PrintExpr))})",
+		CallRhsNode c => $"call {c.Callee}({string.Join(", ", c.Arguments.Select(PrintExpr))})",
 		ExprRhsNode e => PrintExpr(e.Value),
 		_ => "<rhs?>",
 	};

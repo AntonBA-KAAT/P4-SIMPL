@@ -29,6 +29,10 @@ try
 			Console.WriteLine($"Parse OK (AST): {inputPath}");
 			if (parser.ProgramResult != null)
 			{
+				var checker = new TypeChecker();
+				checker.CheckProgram(parser.ProgramResult);
+
+				Console.WriteLine("Typecheck OK");
 				Console.WriteLine(AstPrinter.Print(parser.ProgramResult));
 			}
 		}
@@ -55,8 +59,13 @@ try
 		}
 	}
 }
+catch (TypeCheckException ex)
+{
+    Console.Error.WriteLine($"Type error: {ex.Message}");
+    Environment.Exit(1);
+}
 catch (Exception ex)
 {
-	Console.Error.WriteLine($"Parser crashed: {ex.Message}");
-	Environment.Exit(1);
+    Console.Error.WriteLine($"Parser crashed: {ex.Message}");
+    Environment.Exit(1);
 }
