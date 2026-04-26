@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 public abstract record BindingType;
 
 public sealed record ValueBinding(TypeNode Type): BindingType;
 
 public sealed record FunctionBinding(IReadOnlyList<TypeNode> ParameterTypes, TypeNode ReturnType) : BindingType;
+
+public sealed record StatementCheckResult(
+    Dictionary<string, BindingType> Env,
+    bool DefinitelyReturns
+);
 
 public sealed class TypeCheckException : Exception
 {
@@ -49,11 +53,16 @@ public sealed class TypeChecker
         {
             if(env.ContainsKey(param.Name))
             {
-                throw new TypeCheckException($"Parameter '{{param.Name}}' in function '{{function.Name}}' conflicts with an existing identifier.");
+                throw new TypeCheckException($"Parameter '{param.Name}' in function '{function.Name}' conflicts with an existing identifier.");
             }
             env[param.Name] = new ValueBinding(param.ParameterType);
         }
-        CheckStatementSequence(function.Statements, env, function.ReturnType);
+        var result = CheckStatementSequence(function.Statements, env, function.ReturnType);
+
+        if(!result.DefinitelyReturns)
+        {
+            throw new TypeCheckException($"Function '{function.Name}' may not return a value on all paths.");
+        }
     }
     private TypeNode CheckExpr(ExprNode expr, Dictionary<string, BindingType> env)
     {
@@ -148,7 +157,7 @@ public sealed class TypeChecker
         {
             throw new TypeCheckException($"Receive source must be of type Pid, but got {sourceType}.");
         }
-        return TypeNode.Int; // Assuming messages are integers for simplicity
+        return TypeNode.Int; 
     }
     private TypeNode CheckSpawnRhs(SpawnRhsNode rhs, Dictionary<string, BindingType> env)
     {
@@ -199,16 +208,26 @@ public sealed class TypeChecker
             _ => throw new TypeCheckException($"Invalid binding type for identifier '{name}'.")
         };
     }
-    private Dictionary<string, BindingType> CheckStatementSequence(IReadOnlyList<StatementNode> statements, Dictionary<string, BindingType> env, TypeNode expectedReturnType)
+    private StatementCheckResult CheckStatementSequence(IReadOnlyList<StatementNode> statements, Dictionary<string, BindingType> env, TypeNode expectedReturnType)
     {
         var currentEnv = new Dictionary<string, BindingType>(env);
+        var definitelyReturns = false;
+
         foreach (var stmt in statements)
         {
-            currentEnv = CheckStatement(stmt, currentEnv, expectedReturnType);
+            var result = CheckStatement(stmt, currentEnv, expectedReturnType);
+
+            currentEnv = result.Env;
+
+            if (result.DefinitelyReturns)
+            {
+                definitelyReturns = true;
+                break; // No need to check further statements after a return
+            }
         }
-        return currentEnv;
+        return new StatementCheckResult(currentEnv, definitelyReturns);
     }
-    private Dictionary<string, BindingType> CheckStatement(StatementNode statement, Dictionary<string, BindingType> env, TypeNode expectedReturnType)
+    private StatementCheckResult CheckStatement(StatementNode statement, Dictionary<string, BindingType> env, TypeNode expectedReturnType)
     {
         switch (statement)
         {
@@ -220,7 +239,7 @@ public sealed class TypeChecker
                     {
                         throw new TypeCheckException($"Cannot assign value of type {rhsType} to variable '{a.Name.Name}' of type {lhsType}.");
                     }
-                    return env;
+                    return new StatementCheckResult(env, false);
                 }
             case DeclNode d:
                 {
@@ -238,12 +257,12 @@ public sealed class TypeChecker
                     {
                         [d.Name] = new ValueBinding(d.DeclType)
                     };
-                    return extendedEnv;
+                    return new StatementCheckResult(extendedEnv, false);
                 }
             case PrintNode p:
                 {
                     _ = CheckExpr(p.Value, env);
-                    return env;
+                    return new StatementCheckResult(env, false);
                 }
             case ReturnNode r:
                 {
@@ -252,7 +271,7 @@ public sealed class TypeChecker
                     {
                         throw new TypeCheckException($"Return type mismatch: expected {expectedReturnType}, but got {actual}.");
                     }
-                    return env;
+                    return new StatementCheckResult(env, true);
                 }
             case SendNode s:
                 {
@@ -267,11 +286,10 @@ public sealed class TypeChecker
                     {
                         throw new TypeCheckException($"Send target must be of type Pid, but got {targetType}.");
                     }
-                    // Assuming messages can be of any type for simplicity
-                    return env;
+                    return new StatementCheckResult(env, false);
                 }
             case SkipNode:
-                return env;
+                return new StatementCheckResult(env, false);
             
             case WhileNode w:
                 {
@@ -281,7 +299,7 @@ public sealed class TypeChecker
                         throw new TypeCheckException($"While loop condition must be of type Bool, but got {conditionType}.");
                     }
                     CheckStatementSequence(w.Body, new Dictionary<string, BindingType>(env), expectedReturnType);
-                    return env;
+                    return new StatementCheckResult(env, false);
                 }
             case IfNode i:
                 {
@@ -290,9 +308,9 @@ public sealed class TypeChecker
                     {
                         throw new TypeCheckException($"If statement condition must be of type Bool, but got {conditionType}.");
                     }
-                    CheckStatementSequence(i.ThenBranch, new Dictionary<string, BindingType>(env), expectedReturnType);
-                    CheckStatementSequence(i.ElseBranch, new Dictionary<string, BindingType>(env), expectedReturnType);
-                    return env;
+                    var thenResult = CheckStatementSequence(i.ThenBranch, new Dictionary<string, BindingType>(env), expectedReturnType);
+                    var elseResult = CheckStatementSequence(i.ElseBranch, new Dictionary<string, BindingType>(env), expectedReturnType);
+                    return new StatementCheckResult(env, thenResult.DefinitelyReturns && elseResult.DefinitelyReturns);
                 }
             default:
                 throw new TypeCheckException($"Unsupported statement node: {statement.GetType().Name}");
