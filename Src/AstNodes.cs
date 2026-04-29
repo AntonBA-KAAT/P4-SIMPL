@@ -45,7 +45,7 @@ public sealed record ExprRhsNode(ExprNode Value) : RhsNode;
 
 public abstract record ExprNode : AstNode;
 
-public sealed record NumberNode(string Value) : ExprNode;
+public sealed record NumberNode(int Value) : ExprNode;
 
 public sealed record BoolNode(bool Value) : ExprNode;
 

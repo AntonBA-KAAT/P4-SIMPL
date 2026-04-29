@@ -33,6 +33,8 @@ try
 				checker.CheckProgram(parser.ProgramResult);
 
 				Console.WriteLine("Typecheck OK");
+				var interpreter = new Interpreter(parser.ProgramResult);
+				interpreter.Run();
 				Console.WriteLine(AstPrinter.Print(parser.ProgramResult));
 			}
 		}
