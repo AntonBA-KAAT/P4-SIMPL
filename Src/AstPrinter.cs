@@ -77,7 +77,7 @@ public static class AstPrinter
 
 	private static string PrintExpr(ExprNode expr) => expr switch
 	{
-		NumberNode n => n.Value,
+		NumberNode n => n.Value.ToString(),
 		BoolNode b => b.Value ? "true" : "false",
 		VarNode v => v.Name,
 		SelfNode => "self",
