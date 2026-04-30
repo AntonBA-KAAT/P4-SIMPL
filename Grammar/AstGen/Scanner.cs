@@ -234,8 +234,8 @@ public class Scanner {
 		start[123] = 5; 
 		start[125] = 6; 
 		start[44] = 7; 
-		start[59] = 8; 
 		start[61] = 21; 
+		start[59] = 8; 
 		start[124] = 9; 
 		start[38] = 11; 
 		start[33] = 22; 
@@ -315,9 +315,9 @@ public class Scanner {
 			case "Int": t.kind = 9; break;
 			case "Bool": t.kind = 10; break;
 			case "Pid": t.kind = 11; break;
-			case "if": t.kind = 13; break;
-			case "else": t.kind = 14; break;
-			case "while": t.kind = 15; break;
+			case "if": t.kind = 12; break;
+			case "else": t.kind = 13; break;
+			case "while": t.kind = 14; break;
 			case "print": t.kind = 17; break;
 			case "return": t.kind = 18; break;
 			case "send": t.kind = 19; break;
@@ -375,7 +375,7 @@ public class Scanner {
 			case 7:
 				{t.kind = 8; break;}
 			case 8:
-				{t.kind = 12; break;}
+				{t.kind = 16; break;}
 			case 9:
 				if (ch == '|') {AddCh(); goto case 10;}
 				else {goto case 0;}
@@ -403,9 +403,9 @@ public class Scanner {
 			case 20:
 				{t.kind = 36; break;}
 			case 21:
-				recEnd = pos; recKind = 16;
+				recEnd = pos; recKind = 15;
 				if (ch == '=') {AddCh(); goto case 13;}
-				else {t.kind = 16; break;}
+				else {t.kind = 15; break;}
 			case 22:
 				recEnd = pos; recKind = 37;
 				if (ch == '=') {AddCh(); goto case 14;}

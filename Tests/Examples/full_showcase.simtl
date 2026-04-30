@@ -4,8 +4,9 @@ func Int worker(Pid parent) {
     while (seed > 0) {
         total = total + seed;
         seed = seed - 1;
-    };
-    if (total > 10 || seed == 0) { print(total); } else { skip; };
+        print(total);
+    }
+    if (total > 10 || seed == 0) { print(total); } else { skip; }
     send total to parent;
     return total;
 }
@@ -17,7 +18,7 @@ func Int orchestrator(Pid parent) {
     Int result = receive(workerPid);
     Int doubled = result * 2;
     Bool largeEnough = doubled >= 10 && result != 0;
-    if (largeEnough) { print(doubled); } else { skip; };
+    if (largeEnough) { print(doubled); } else { skip; }
     print(result + 1);
 
     return result;

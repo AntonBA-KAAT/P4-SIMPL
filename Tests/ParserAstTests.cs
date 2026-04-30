@@ -10,8 +10,8 @@ public class ParserAstTests
             func Int main() {
                 Int x = 1;
                 Int y = 3;
-                if (x < y) { print(x); } else { skip; };
-                while (x < 10) { x = x + 1; };
+                if (x < y) { print(x); } else { skip; }
+                while (x < 10) { x = x + 1; }
                 send x to self;
                 return x;
             }
@@ -61,7 +61,7 @@ public class ParserAstTests
     {
         const string source = """
             func Int main() {
-                if (true) { } else { };
+                if (true) { } else { }
                 return 0;
             }
             """;
@@ -112,9 +112,9 @@ public class ParserAstTests
             func Int main() {
                 Int x = 0;
                 while (x < 3) {
-                    if (x == 1) { print(x); } else { skip; };
+                    if (x == 1) { print(x); } else { skip; }
                     x = x + 1;
-                };
+                }
                 return x;
             }
             """;
@@ -219,8 +219,8 @@ public class ParserAstTests
                 Int x = call add(1, 2);
                 Pid p = spawn worker(x);
                 x = receive(self);
-                if (x < 10) { print(x); } else { skip; };
-                while (x < 12) { x = x + 1; };
+                if (x < 10) { print(x); } else { skip; }
+                while (x < 12) { x = x + 1; }
                 send x to self;
                 return x;
             }

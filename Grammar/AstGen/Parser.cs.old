@@ -1,6 +1,8 @@
 
 using System;
 
+namespace MyLangAstGen {
+
 
 
 public class Parser {
@@ -585,4 +587,5 @@ public class Errors {
 
 public class FatalError: Exception {
 	public FatalError(string m): base(m) {}
+}
 }

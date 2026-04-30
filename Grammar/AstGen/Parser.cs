@@ -151,11 +151,9 @@ public ExprNode ExprResult;
 		if (StartOf(1)) {
 			Statement();
 			statements.Add(StatementResult); 
-			Expect(12);
 			while (StartOf(1)) {
 				Statement();
 				statements.Add(StatementResult); 
-				Expect(12);
 			}
 		}
 		StmtSeqResult = statements; 
@@ -171,11 +169,11 @@ public ExprNode ExprResult;
 
 	void Statement() {
 		switch (la.kind) {
-		case 13: {
+		case 12: {
 			IfStmt();
 			break;
 		}
-		case 15: {
+		case 14: {
 			WhileStmt();
 			break;
 		}
@@ -209,7 +207,7 @@ public ExprNode ExprResult;
 
 	void IfStmt() {
 		ExprNode condition; System.Collections.Generic.List<StatementNode> thenBranch = null; System.Collections.Generic.List<StatementNode> elseBranch = null; 
-		Expect(13);
+		Expect(12);
 		Expect(4);
 		Expr();
 		condition = ExprResult; 
@@ -218,7 +216,7 @@ public ExprNode ExprResult;
 		StmtSeq();
 		thenBranch = StmtSeqResult; 
 		Expect(7);
-		Expect(14);
+		Expect(13);
 		Expect(6);
 		StmtSeq();
 		elseBranch = StmtSeqResult; 
@@ -228,7 +226,7 @@ public ExprNode ExprResult;
 
 	void WhileStmt() {
 		ExprNode condition; System.Collections.Generic.List<StatementNode> body = null; 
-		Expect(15);
+		Expect(14);
 		Expect(4);
 		Expr();
 		condition = ExprResult; 
@@ -244,8 +242,9 @@ public ExprNode ExprResult;
 		string name; 
 		Expect(1);
 		name = t.val; 
-		Expect(16);
+		Expect(15);
 		RHS();
+		Expect(16);
 		StatementResult = new AssignNode(new VarNode(name), RhsResult); 
 	}
 
@@ -254,8 +253,9 @@ public ExprNode ExprResult;
 		Type();
 		Expect(1);
 		name = t.val; 
-		Expect(16);
+		Expect(15);
 		RHS();
+		Expect(16);
 		StatementResult = new DeclNode(TypeResult, name, RhsResult); 
 	}
 
@@ -264,12 +264,14 @@ public ExprNode ExprResult;
 		Expect(4);
 		Expr();
 		Expect(5);
+		Expect(16);
 		StatementResult = new PrintNode(ExprResult); 
 	}
 
 	void ReturnStmt() {
 		Expect(18);
 		Expr();
+		Expect(16);
 		StatementResult = new ReturnNode(ExprResult); 
 	}
 
@@ -281,11 +283,13 @@ public ExprNode ExprResult;
 		Expect(20);
 		Expr();
 		target = ExprResult; 
+		Expect(16);
 		StatementResult = new SendNode(message, target); 
 	}
 
 	void SkipStmt() {
 		Expect(21);
+		Expect(16);
 		StatementResult = new SkipNode(); 
 	}
 
@@ -494,7 +498,7 @@ public ExprNode ExprResult;
 	
 	static readonly bool[,] set = {
 		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
-		{_x,_T,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _x,_T,_x,_T, _x,_T,_T,_T, _x,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_T,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _T,_x,_T,_x, _x,_T,_T,_T, _x,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
 		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_x, _x,_T,_T,_T, _T,_x,_x},
 		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
 		{_x,_T,_T,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_x,_x}
@@ -523,11 +527,11 @@ public class Errors {
 			case 9: s = "\"Int\" expected"; break;
 			case 10: s = "\"Bool\" expected"; break;
 			case 11: s = "\"Pid\" expected"; break;
-			case 12: s = "\";\" expected"; break;
-			case 13: s = "\"if\" expected"; break;
-			case 14: s = "\"else\" expected"; break;
-			case 15: s = "\"while\" expected"; break;
-			case 16: s = "\"=\" expected"; break;
+			case 12: s = "\"if\" expected"; break;
+			case 13: s = "\"else\" expected"; break;
+			case 14: s = "\"while\" expected"; break;
+			case 15: s = "\"=\" expected"; break;
+			case 16: s = "\";\" expected"; break;
 			case 17: s = "\"print\" expected"; break;
 			case 18: s = "\"return\" expected"; break;
 			case 19: s = "\"send\" expected"; break;
