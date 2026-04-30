@@ -4,7 +4,7 @@ func Int worker(Pid parent) {
     print(n);
     n = n / 7;
     send n to parent;
-    return 0
+    return 0;
 }
 
 func Int main() {
@@ -14,5 +14,5 @@ func Int main() {
     print(x + 1);
     Int r = receive(w);
     print(r);
-    return r
+    return r;
 }

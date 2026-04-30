@@ -30,7 +30,7 @@ public class InterpreterTests
             func Int main() {
                 Int x = 5;
                 x = x + 2;
-                return x
+                return x;
             }
             """;
 
@@ -49,8 +49,8 @@ public class InterpreterTests
     public void SpawnReturnsPid()
     {
         const string source = """
-            func Int worker(Int n) { return n }
-            func Pid main() { Pid p = spawn worker(1); return p }
+            func Int worker(Int n) { return n; }
+            func Pid main() { Pid p = spawn worker(1); return p; }
             """;
 
         var program = ParseProgram(source);
@@ -68,8 +68,8 @@ public class InterpreterTests
     public void SendReceiveBetweenProcesses()
     {
         const string source = """
-            func Int worker(Pid parent) { Int n = receive(parent); send n to parent; return 0 }
-            func Int main() { Pid w = spawn worker(self); send 7 to w; Int r = receive(w); return r }
+            func Int worker(Pid parent) { Int n = receive(parent); send n to parent; return 0; }
+            func Int main() { Pid w = spawn worker(self); send 7 to w; Int r = receive(w); return r; }
             """;
 
         var program = ParseProgram(source);

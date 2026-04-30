@@ -10,5 +10,5 @@ func Int main() {
     print(x);
     x = (x + 4) / 2;
     print(x);
-    return x
+    return x;
 }

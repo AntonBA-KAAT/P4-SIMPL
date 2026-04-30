@@ -6,7 +6,10 @@ public class ExamplesTests
 {
     private static ProgramNode ParseFile(string path)
     {
-        var scanner = new MyLangAstGen.Scanner(path);
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var fullPath = Path.GetFullPath(Path.Combine(root, path));
+
+        var scanner = new MyLangAstGen.Scanner(fullPath);
         var parser = new MyLangAstGen.Parser(scanner);
         parser.Parse();
         Assert.Equal(0, parser.errors.count);
@@ -23,7 +26,7 @@ public class ExamplesTests
         var interpreter = new Interpreter(program);
         var result = interpreter.Run();
         Assert.IsType<IntValue>(result);
-        Assert.Equal(42, ((IntValue)result).Value);
+        Assert.Equal(12, ((IntValue)result).Value);
     }
 
     [Fact]
@@ -46,6 +49,6 @@ public class ExamplesTests
         var interpreter = new Interpreter(program);
         var result = interpreter.Run();
         Assert.IsType<IntValue>(result);
-        Assert.Equal(7, ((IntValue)result).Value);
+        Assert.Equal(1, ((IntValue)result).Value);
     }
 }

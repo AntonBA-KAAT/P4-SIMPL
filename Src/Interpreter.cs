@@ -171,7 +171,6 @@ public sealed class Interpreter
             
             case ReturnNode r:
                 throw new ReturnSignal(EvalExpr(r.Value, process));
-                break;
 
             case SendNode s:
                 var message = EvalExpr(s.Message, process);

@@ -11,7 +11,7 @@ public class IntegrationTests
             func Int main() {
                 Int x = 1;
                 x = x + 41;
-                return x
+                return x;
             }
             """;
 

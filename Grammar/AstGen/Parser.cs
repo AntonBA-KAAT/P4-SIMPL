@@ -151,13 +151,11 @@ public ExprNode ExprResult;
 		if (StartOf(1)) {
 			Statement();
 			statements.Add(StatementResult); 
-			while (la.kind == 12) {
-				Get();
+			Expect(12);
+			while (StartOf(1)) {
 				Statement();
 				statements.Add(StatementResult); 
-			}
-			if (la.kind == 12) {
-				Get();
+				Expect(12);
 			}
 		}
 		StmtSeqResult = statements; 
