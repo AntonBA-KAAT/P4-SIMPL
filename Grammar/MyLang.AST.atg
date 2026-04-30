@@ -175,7 +175,7 @@ UnaryExp =
 .
 
 Primary =
-    number (. ExprResult = new NumberNode(t.val); .)
+    number (. ExprResult = new NumberNode(int.Parse(t.val)); .)
   | "true" (. ExprResult = new BoolNode(true); .)
   | "false" (. ExprResult = new BoolNode(false); .)
   | ident (. ExprResult = new VarNode(t.val); .)

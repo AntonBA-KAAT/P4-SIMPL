@@ -1,0 +1,11 @@
+func Int worker(Int n) {
+    print(n);
+    print(self);
+    return n
+}
+
+func Pid main() {
+    Pid p = spawn worker(1);
+    print(self);
+    return p
+}

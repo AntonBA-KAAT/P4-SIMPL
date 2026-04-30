@@ -158,7 +158,7 @@ public sealed class Interpreter
                 break;
             
             case DeclNode d:
-                if (!process.Store.ContainsKey(d.Name))
+                if (process.Store.ContainsKey(d.Name))
                 {
                     throw new RuntimeException($"Undefined variable '{d.Name}'");
                 }
@@ -176,9 +176,9 @@ public sealed class Interpreter
             case SendNode s:
                 var message = EvalExpr(s.Message, process);
                 var target = EvalExpr(s.Target, process);
-                if(message is not IntValue msg)
+                if (message is not IntValue msg)
                     throw new RuntimeException("send message must be Int");
-                if(message is not PidValue pid)
+                if (target is not PidValue pid)
                     throw new RuntimeException("send target must be Pid");
                 Send(process.Pid, pid.Value, msg.Value);
                 break;

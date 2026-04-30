@@ -1,0 +1,14 @@
+func Int main() {
+    Int x = 40;
+    x = x + 2;
+    print(x);
+    x = x * 2;
+    print(x);
+    x = x - 3;
+    print(x);
+    x = x / 4;
+    print(x);
+    x = (x + 4) / 2;
+    print(x);
+    return x
+}

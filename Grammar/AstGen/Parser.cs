@@ -450,7 +450,7 @@ public ExprNode ExprResult;
 		switch (la.kind) {
 		case 2: {
 			Get();
-			ExprResult = new NumberNode(t.val); 
+			ExprResult = new NumberNode(int.Parse(t.val)); 
 			break;
 		}
 		case 38: {
