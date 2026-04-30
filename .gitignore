@@ -44,3 +44,32 @@ Thumbs.db
 # Coco/R temp output (if produced locally)
 *.tmp
 *.bak
+
+# Editor history and swap files
+.history/
+*.swp
+*.swo
+
+# Local development settings (should not be committed)
+appsettings.Development.json
+local.settings.json
+secrets.json
+
+# Publish / build artifacts
+artifacts/
+publish/
+
+# Misc IDE/project files
+*.vspscc
+*.vssscc
+*.sln.ide
+*.DotSettings.user
+
+# Optional generated parser outputs (uncomment if you want them ignored)
+# CoCoR/
+# Grammar/AstGen/
+# Grammar/Parser.cs
+# Grammar/Scanner.cs
+
+# Local DB / caches
+*.db
