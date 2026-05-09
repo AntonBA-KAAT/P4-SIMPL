@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Src\Src.csproj" />
+    <ProjectReference Include="..\Src\Src.csproj" AdditionalProperties="IncludeLegacyParser=false" />
   </ItemGroup>
 
 </Project>

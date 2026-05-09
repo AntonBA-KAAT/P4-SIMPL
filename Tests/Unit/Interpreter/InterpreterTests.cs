@@ -82,4 +82,84 @@ public class InterpreterTests
         Assert.IsType<IntValue>(result);
         Assert.Equal(7, ((IntValue)result).Value);
     }
+    [Fact]
+    public void MultipleWorkersCanSendToMain()
+    {
+        const string source = """
+            func Int worker(Pid parent) {
+                send 1 to parent;
+                return 0;
+            }
+
+            func Int main() {
+                Pid p1 = spawn worker(self);
+                Pid p2 = spawn worker(self);
+
+                Int a = receive(p1);
+                Int b = receive(p2);
+
+                return a + b;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(2, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void SpawnedProcessCanUseSelf()
+    {
+        const string source = """
+            func Int worker(Pid parent) {
+                send 5 to parent;
+                return 0;
+            }
+
+            func Int main() {
+                Pid p = spawn worker(self);
+                Int x = receive(p);
+                return x;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(5, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void FunctionCallReturnsValue()
+    {
+        const string source = """
+            func Int inc(Int n) {
+                return n + 1;
+            }
+
+            func Int main() {
+                Int x = call inc(41);
+                return x;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(42, ((IntValue)result).Value);
+    }
 }

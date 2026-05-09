@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Xunit;
 
-public class ExamplesTests
+public class RequirementAcceptanceTests
 {
     private static ProgramNode ParseFile(string path)
     {
@@ -20,7 +20,7 @@ public class ExamplesTests
     [Fact]
     public void ArithmeticExample_Returns42()
     {
-        var program = ParseFile("Tests/Examples/arithmetic.simtl");
+        var program = ParseFile("Examples/arithmetic.simtl");
         var checker = new TypeChecker();
         checker.CheckProgram(program);
         var interpreter = new Interpreter(program);
@@ -32,7 +32,7 @@ public class ExamplesTests
     [Fact]
     public void SpawnPidExample_ReturnsPid()
     {
-        var program = ParseFile("Tests/Examples/spawn_pid.simtl");
+        var program = ParseFile("Examples/spawn_pid.simtl");
         var checker = new TypeChecker();
         checker.CheckProgram(program);
         var interpreter = new Interpreter(program);
@@ -43,12 +43,25 @@ public class ExamplesTests
     [Fact]
     public void SendReceiveExample_Returns7()
     {
-        var program = ParseFile("Tests/Examples/send_receive.simtl");
+        var program = ParseFile("Examples/send_receive.simtl");
         var checker = new TypeChecker();
         checker.CheckProgram(program);
         var interpreter = new Interpreter(program);
         var result = interpreter.Run();
         Assert.IsType<IntValue>(result);
         Assert.Equal(1, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void MustHave_DistributedMemory_ProcessesDoNotShareVariables()
+    {
+        var program = ParseFile("Examples/ProcessIsolation.simtl");
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(104, ((IntValue)result).Value);
     }
 }

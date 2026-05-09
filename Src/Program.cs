@@ -45,6 +45,7 @@ try
 	}
 	else
 	{
+#if INCLUDE_LEGACY_PARSER
 		var scanner = new Scanner(inputPath);
 		var parser = new Parser(scanner);
 		parser.Parse();
@@ -58,6 +59,10 @@ try
 			Console.Error.WriteLine($"Parse failed with {parser.errors.count} error(s).");
 			Environment.Exit(1);
 		}
+#else
+		Console.Error.WriteLine("Legacy parser is disabled in this build. Use --ast mode.");
+		Environment.Exit(1);
+#endif
 	}
 }
 catch (TypeCheckException ex)

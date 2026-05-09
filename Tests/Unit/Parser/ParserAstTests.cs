@@ -275,6 +275,67 @@ public class ParserAstTests
         var actualLines = printed.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
         Assert.Equal(expectedLines, actualLines);
     }
+    [Fact]
+    public void ParsesNestedIfInsideWhile()
+    {
+        const string source = """
+        func Int main() {
+            while (true) {
+                if (true) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            return 0;
+        }
+        """;
+
+        var program = ParseProgram(source);
+        var fn = Assert.Single(program.Functions);
+
+        var whileStmt = Assert.IsType<WhileNode>(fn.Statements[0]);
+        Assert.Single(whileStmt.Body);
+
+        var ifStmt = Assert.IsType<IfNode>(whileStmt.Body[0]);
+        Assert.Single(ifStmt.ThenBranch);
+        Assert.Single(ifStmt.ElseBranch);
+    }
+    [Fact]
+    public void ParsesSpawnReceiveAndCallInDeclarations()
+    {
+        const string source = """
+            func Int inc(Int n) {
+                return n + 1;
+            }
+
+            func Int worker(Pid parent) {
+                Int x = receive(parent);
+                return x;
+            }
+
+            func Int main() {
+                Pid p = spawn worker(self);
+                Int x = receive(p);
+                Int y = call inc(x);
+                return y;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        Assert.Equal(3, program.Functions.Count);
+
+        var main = program.Functions[2];
+
+        var spawnDecl = Assert.IsType<DeclNode>(main.Statements[0]);
+        Assert.IsType<SpawnRhsNode>(spawnDecl.Value);
+
+        var receiveDecl = Assert.IsType<DeclNode>(main.Statements[1]);
+        Assert.IsType<ReceiveRhsNode>(receiveDecl.Value);
+
+        var callDecl = Assert.IsType<DeclNode>(main.Statements[2]);
+        Assert.IsType<CallRhsNode>(callDecl.Value);
+    }
 
     private static ProgramNode ParseProgram(string source)
     {
