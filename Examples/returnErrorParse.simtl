@@ -1,0 +1,7 @@
+func Int main() {
+    if (true) {
+        return 1;
+    } else {
+        skip;
+    }
+}

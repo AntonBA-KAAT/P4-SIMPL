@@ -257,4 +257,150 @@ public class TypeCheckerTests
         var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
         Assert.Contains("Send target must be of type Pid", ex.Message);
     }
+    [Fact]
+    public void RejectsDuplicateFunctionNames()
+    {
+        var program = new ProgramNode(new List<FunctionNode>
+        {
+            new(TypeNode.Int, "main", new List<ParamNode>(), new List<StatementNode>
+            {
+                new ReturnNode(new NumberNode("0"))
+            }),
+            new(TypeNode.Int, "main", new List<ParamNode>(), new List<StatementNode>
+            {
+                new ReturnNode(new NumberNode("1"))
+            })
+        });
+
+        var checker = new TypeChecker();
+
+        var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
+        Assert.Contains("Duplicate function name", ex.Message);
+    }
+    [Fact]
+    public void RejectsCallWithWrongArgumentCount()
+    {
+        var program = new ProgramNode(new List<FunctionNode>
+        {
+            new(TypeNode.Int, "add", new List<ParamNode>
+            {
+                new(TypeNode.Int, "a"),
+                new(TypeNode.Int, "b")
+            },
+            new List<StatementNode>
+            {
+                new ReturnNode(new BinaryExprNode("+", new VarNode("a"), new VarNode("b")))
+            }),
+
+            new(TypeNode.Int, "main", new List<ParamNode>(), new List<StatementNode>
+            {
+                new DeclNode(
+                    TypeNode.Int,
+                    "x",
+                    new CallRhsNode("add", new List<ExprNode>
+                    {
+                        new NumberNode("1")
+                    })),
+
+                new ReturnNode(new VarNode("x"))
+            })
+        });
+
+        var checker = new TypeChecker();
+
+        var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
+        Assert.Contains("expects 2 arguments", ex.Message);
+    }
+    [Fact]
+    public void RejectsSpawnWithWrongArgumentCount()
+    {
+        var program = new ProgramNode(new List<FunctionNode>
+        {
+            new(TypeNode.Int, "worker", new List<ParamNode>
+            {
+                new(TypeNode.Int, "x")
+            },
+            new List<StatementNode>
+            {
+                new ReturnNode(new NumberNode("0"))
+            }),
+
+            new(TypeNode.Int, "main", new List<ParamNode>(), new List<StatementNode>
+            {
+                new DeclNode(
+                    TypeNode.Pid,
+                    "p",
+                    new SpawnRhsNode("worker", new List<ExprNode>())),
+
+                new ReturnNode(new NumberNode("0"))
+            })
+        });
+
+        var checker = new TypeChecker();
+
+        var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
+        Assert.Contains("expects 1 arguments", ex.Message);
+    }
+    [Fact]
+    public void RejectsSendMessageThatIsNotInt()
+    {
+        var program = new ProgramNode(new List<FunctionNode>
+        {
+            new(TypeNode.Int, "main", new List<ParamNode>(), new List<StatementNode>
+            {
+                new SendNode(new BoolNode(true), new SelfNode()),
+                new ReturnNode(new NumberNode("0"))
+            })
+        });
+
+        var checker = new TypeChecker();
+
+        var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
+        Assert.Contains("Send message must be of type Int", ex.Message);
+    }
+    [Fact]
+    public void RejectsCallToVariableName()
+    {
+        var program = new ProgramNode(new List<FunctionNode>
+        {
+            new(TypeNode.Int, "main", new List<ParamNode>(), new List<StatementNode>
+            {
+                new DeclNode(TypeNode.Int, "x", new ExprRhsNode(new NumberNode("1"))),
+
+                new DeclNode(
+                    TypeNode.Int,
+                    "y",
+                    new CallRhsNode("x", new List<ExprNode>())),
+
+                new ReturnNode(new VarNode("y"))
+            })
+        });
+
+        var checker = new TypeChecker();
+
+        var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
+        Assert.Contains("is a variable, not a function", ex.Message);
+    }
+    [Fact]
+    public void RejectsAssignmentToFunctionName()
+    {
+        var program = new ProgramNode(new List<FunctionNode>
+        {
+            new(TypeNode.Int, "foo", new List<ParamNode>(), new List<StatementNode>
+            {
+                new ReturnNode(new NumberNode("0"))
+            }),
+
+            new(TypeNode.Int, "main", new List<ParamNode>(), new List<StatementNode>
+            {
+                new AssignNode(new VarNode("foo"), new ExprRhsNode(new NumberNode("1"))),
+                new ReturnNode(new NumberNode("0"))
+            })
+        });
+
+        var checker = new TypeChecker();
+
+        var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
+        Assert.Contains("is a function, not a variable", ex.Message);
+    }
 }

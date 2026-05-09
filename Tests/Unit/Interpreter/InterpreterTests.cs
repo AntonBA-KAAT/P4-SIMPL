@@ -162,4 +162,113 @@ public class InterpreterTests
         Assert.IsType<IntValue>(result);
         Assert.Equal(42, ((IntValue)result).Value);
     }
+    [Fact]
+    public void IfFalseExecutesElseBranch()
+    {
+        const string source = """
+            func Int main() {
+                if (false) {
+                    return 1;
+                } else {
+                    return 2;
+                }
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(2, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void WhileLoopComputesExpectedResult()
+    {
+        const string source = """
+            func Int main() {
+                Int x = 0;
+
+                while (x < 5) {
+                    x = x + 1;
+                }
+
+                return x;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(5, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void UnaryMinusWorks()
+    {
+        const string source = """
+            func Int main() {
+                Int x = -5;
+                return x;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(-5, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void BooleanNotWorks()
+    {
+        const string source = """
+            func Int main() {
+                if (!false) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(1, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void MissingMainThrowsRuntimeException()
+    {
+        const string source = """
+            func Int other() {
+                return 0;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+
+        var ex = Assert.Throws<RuntimeException>(() => interpreter.Run());
+        Assert.Contains("No main function found", ex.Message);
+    }
 }

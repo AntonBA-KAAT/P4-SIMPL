@@ -160,7 +160,7 @@ public sealed class Interpreter
             case DeclNode d:
                 if (process.Store.ContainsKey(d.Name))
                 {
-                    throw new RuntimeException($"Undefined variable '{d.Name}'");
+                    throw new RuntimeException($"Variable '{d.Name}' already declared in this scope");
                 }
                 process.Store[d.Name] = EvalRhs(d.Value, process);
                 break;

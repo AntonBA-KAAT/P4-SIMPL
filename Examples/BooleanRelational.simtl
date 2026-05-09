@@ -1,0 +1,11 @@
+func Int main() {
+    Int x = 5;
+    Int y = 10;
+
+    if (x < y && y != x) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+            

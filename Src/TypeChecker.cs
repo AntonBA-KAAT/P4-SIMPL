@@ -141,7 +141,7 @@ public sealed class TypeChecker
         {
             ExprRhsNode e => CheckExpr(e.Value, env),
             
-            ReceiveRhsNode r => CheckRecieveRhs(r, env),
+            ReceiveRhsNode r => CheckReceiveRhs(r, env),
 
             SpawnRhsNode s => CheckSpawnRhs(s, env),
 
@@ -150,7 +150,7 @@ public sealed class TypeChecker
             _ => throw new TypeCheckException($"Unsupported RHS node: {rhs.GetType().Name}")
         };
     }
-    private TypeNode CheckRecieveRhs(ReceiveRhsNode rhs, Dictionary<string, BindingType> env)
+    private TypeNode CheckReceiveRhs(ReceiveRhsNode rhs, Dictionary<string, BindingType> env)
     {
         var sourceType = CheckExpr(rhs.Source, env);
         if (sourceType != TypeNode.Pid)
