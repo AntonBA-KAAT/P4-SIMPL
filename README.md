@@ -39,13 +39,13 @@ dotnet build P4-SIMTL.sln
 Run parser-only mode:
 
 ```bash
-dotnet run --project Src -- Tests/Examples/arithmetic.simtl
+dotnet run --project Src -- Examples/arithmetic.simtl
 ```
 
 Run AST + type checker + interpreter mode:
 
 ```bash
-dotnet run --project Src -- --ast Tests/Examples/arithmetic.simtl
+dotnet run --project Src -- --ast Examples/arithmetic.simtl
 ```
 
 Expected successful output includes:
@@ -64,14 +64,28 @@ dotnet test P4-SIMTL.sln
 Run unit tests only:
 
 ```bash
-dotnet test Tests/AstTests.csproj
+dotnet test Tests/AstTests.csproj --filter "FullyQualifiedName~Unit"
 ```
 
 Run integration tests only:
 
 ```bash
-dotnet test Tests.Integration/IntegrationTests.csproj
+dotnet test Tests/AstTests.csproj --filter "FullyQualifiedName~Integration"
 ```
+
+Run acceptance tests only:
+
+```bash
+dotnet test Tests/AstTests.csproj --filter "FullyQualifiedName~Acceptance"
+```
+
+### Parser Selection During Test Builds
+
+`Src/Src.csproj` has a build property named `IncludeLegacyParser`.
+
+- Default app builds keep the legacy parser enabled (`IncludeLegacyParser=true`) so parser-only mode remains available.
+- Test builds disable the legacy parser through the `ProjectReference` in `Tests/AstTests.csproj` (`AdditionalProperties="IncludeLegacyParser=false"`).
+- Tests therefore use the AST parser (`MyLangAstGen.Parser` / `MyLangAstGen.Scanner`) and do not compile the legacy `Grammar/Parser.cs` and `Grammar/Scanner.cs` for the test build path.
 
 ## SIMTL Language Snapshot
 
@@ -99,16 +113,16 @@ func Int main() {
 - `Src/` - runtime implementation (AST nodes, type checker, interpreter, entry point)
 - `Grammar/` - grammar and generated scanner/parser sources (including AST generator output)
 - `CoCoR/` - parser/scanner frame files used by generator tooling
-- `Tests/` - unit tests and SIMTL example programs under `Tests/Examples/`
-- `Tests.Integration/` - end-to-end integration tests
+- `Tests/` - unit, integration, and acceptance tests
+- `Examples/` - SIMTL sample programs used by tests and manual runs
 - `P4-SIMTL.sln` - solution file
 
 ## Example Programs
 
-- `Tests/Examples/arithmetic.simtl`
-- `Tests/Examples/spawn_pid.simtl`
-- `Tests/Examples/send_receive.simtl`
-- `Tests/Examples/full_showcase.simtl`
+- `Examples/arithmetic.simtl`
+- `Examples/spawn_pid.simtl`
+- `Examples/send_receive.simtl`
+- `Examples/full_showcase.simtl`
 
 These are useful for both manual runs (`dotnet run --project Src -- --ast <file>`) and for understanding supported syntax.
 
