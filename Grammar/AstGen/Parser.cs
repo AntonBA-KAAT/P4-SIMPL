@@ -10,6 +10,8 @@ public class Parser {
 	public const int _ident = 1;
 	public const int _number = 2;
 	public const int maxT = 41;
+	public const int _percentComment = 42;
+	public const int _blockComment = 43;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -56,6 +58,10 @@ public ExprNode ExprResult;
 			t = la;
 			la = scanner.Scan();
 			if (la.kind <= maxT) { ++errDist; break; }
+				if (la.kind == 42) {
+				}
+				if (la.kind == 43) {
+				}
 
 			la = t;
 		}

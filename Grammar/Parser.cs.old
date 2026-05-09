@@ -122,8 +122,12 @@ public class Parser {
 	}
 
 	void StmtSeq() {
-		while (StartOf(1)) {
+		if (StartOf(1)) {
 			Statement();
+			while (la.kind == 12) {
+				Get();
+				Statement();
+			}
 			if (la.kind == 12) {
 				Get();
 			}

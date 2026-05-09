@@ -13,13 +13,20 @@ public System.Collections.Generic.List<ExprNode> ArgsResult;
 public ExprNode ExprResult;
 
 CHARACTERS
-  letter = 'A'..'Z' + 'a'..'z'.
-  digit  = '0'..'9'.
-  ws     = ' ' + '\t' + '\r' + '\n'.
+  letter      = 'A'..'Z' + 'a'..'z'.
+  digit       = '0'..'9'.
+  ws          = ' ' + '\t' + '\r' + '\n'.
+  newLine     = '\r' + '\n'.
+  notNewLine  = ANY - newLine.
+  notPercent  = ANY - '%'.
 
 TOKENS
   ident  = letter {letter | digit | "_"}.
   number = digit {digit}.
+
+PRAGMAS
+  percentComment = "%" { notNewLine } newLine.
+  blockComment   = "%%" { notPercent | "%" notPercent } "%%".
 
 IGNORE ws
 

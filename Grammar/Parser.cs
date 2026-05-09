@@ -8,6 +8,7 @@ public class Parser {
 	public const int _ident = 1;
 	public const int _number = 2;
 	public const int maxT = 41;
+	public const int _percentComment = 42;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -42,6 +43,8 @@ public class Parser {
 			t = la;
 			la = scanner.Scan();
 			if (la.kind <= maxT) { ++errDist; break; }
+				if (la.kind == 42) {
+				}
 
 			la = t;
 		}
@@ -122,8 +125,12 @@ public class Parser {
 	}
 
 	void StmtSeq() {
-		while (StartOf(1)) {
+		if (StartOf(1)) {
 			Statement();
+			while (la.kind == 12) {
+				Get();
+				Statement();
+			}
 			if (la.kind == 12) {
 				Get();
 			}

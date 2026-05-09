@@ -1,6 +1,7 @@
 func Int worker(Pid parent) {
     Int seed = receive(parent);
-    Int total = 0;
+    Int total = 0; %% This is a comment
+                    This is multi line comment%%
     while (seed > 0) {
         total = total + seed;
         seed = seed - 1;

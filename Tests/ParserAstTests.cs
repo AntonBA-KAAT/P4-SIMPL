@@ -75,6 +75,23 @@ public class ParserAstTests
     }
 
     [Fact]
+    public void IgnoresPercentComments()
+    {
+        const string source = """
+            % leading comment
+            func Int main() {
+                Int x = 1; % inline comment
+                % comment between statements
+                return x;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var fn = Assert.Single(program.Functions);
+        Assert.Equal(2, fn.Statements.Count);
+    }
+
+    [Fact]
     public void ParsesReceiveSpawnAndCallRhs()
     {
         const string source = """
