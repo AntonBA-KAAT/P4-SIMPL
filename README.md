@@ -36,21 +36,16 @@ From the repository root:
 dotnet build P4-SIMTL.sln
 ```
 
-Run parser-only mode:
+Run parser + AST + type checker + interpreter mode:
 
 ```bash
 dotnet run --project Src -- Examples/arithmetic.simtl
 ```
 
-Run AST + type checker + interpreter mode:
-
-```bash
-dotnet run --project Src -- --ast Examples/arithmetic.simtl
-```
-
 Expected successful output includes:
-- `Parse OK` (or `Parse OK (AST)`)
-- `Typecheck OK` (in `--ast` mode)
+- `Parse OK`
+- `Typecheck OK`
+- `Program returned: <value>`
 - interpreter prints/behavior from the SIMTL program
 
 ## Running Tests
@@ -83,7 +78,7 @@ dotnet test Tests/AstTests.csproj --filter "FullyQualifiedName~Acceptance"
 
 `Src/Src.csproj` has a build property named `IncludeLegacyParser`.
 
-- Default app builds keep the legacy parser enabled (`IncludeLegacyParser=true`) so parser-only mode remains available.
+- Default app builds keep the legacy parser sources enabled (`IncludeLegacyParser=true`).
 - Test builds disable the legacy parser through the `ProjectReference` in `Tests/AstTests.csproj` (`AdditionalProperties="IncludeLegacyParser=false"`).
 - Tests therefore use the AST parser (`MyLangAstGen.Parser` / `MyLangAstGen.Scanner`) and do not compile the legacy `Grammar/Parser.cs` and `Grammar/Scanner.cs` for the test build path.
 
@@ -124,7 +119,7 @@ func Int main() {
 - `Examples/send_receive.simtl`
 - `Examples/full_showcase.simtl`
 
-These are useful for both manual runs (`dotnet run --project Src -- --ast <file>`) and for understanding supported syntax.
+These are useful for both manual runs (`dotnet run --project Src -- <file>`) and for understanding supported syntax.
 
 ## Common Issues
 
