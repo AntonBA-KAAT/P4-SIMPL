@@ -5,7 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IncludeLegacyParser>true</IncludeLegacyParser>
+    <IncludeLegacyParser>false</IncludeLegacyParser>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IncludeLegacyParser)' == 'true'">

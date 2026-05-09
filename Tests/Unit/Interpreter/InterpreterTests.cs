@@ -4,6 +4,53 @@ using Xunit;
 
 public class InterpreterTests
 {
+    [Fact]
+    public void MailboxReceiveFrom_RemovesFirstMatchingSenderEvenWhenNotAtHead()
+    {
+        var mailbox = new Mailbox();
+        mailbox.Send(new Message(1, 10));
+        mailbox.Send(new Message(2, 20));
+        mailbox.Send(new Message(1, 30));
+
+        var fromTwo = mailbox.ReceiveFrom(2);
+        Assert.Equal(2, fromTwo.SenderPid);
+        Assert.Equal(20, fromTwo.Value);
+
+        var firstFromOne = mailbox.ReceiveFrom(1);
+        Assert.Equal(1, firstFromOne.SenderPid);
+        Assert.Equal(10, firstFromOne.Value);
+
+        var secondFromOne = mailbox.ReceiveFrom(1);
+        Assert.Equal(1, secondFromOne.SenderPid);
+        Assert.Equal(30, secondFromOne.Value);
+    }
+
+    [Fact]
+    public void MailboxReceiveFrom_PreservesOrderOfOtherMessages()
+    {
+        var mailbox = new Mailbox();
+        mailbox.Send(new Message(1, 100));
+        mailbox.Send(new Message(2, 200));
+        mailbox.Send(new Message(3, 300));
+        mailbox.Send(new Message(1, 400));
+
+        var fromThree = mailbox.ReceiveFrom(3);
+        Assert.Equal(3, fromThree.SenderPid);
+        Assert.Equal(300, fromThree.Value);
+
+        var fromOne = mailbox.ReceiveFrom(1);
+        Assert.Equal(1, fromOne.SenderPid);
+        Assert.Equal(100, fromOne.Value);
+
+        var fromTwo = mailbox.ReceiveFrom(2);
+        Assert.Equal(2, fromTwo.SenderPid);
+        Assert.Equal(200, fromTwo.Value);
+
+        var secondFromOne = mailbox.ReceiveFrom(1);
+        Assert.Equal(1, secondFromOne.SenderPid);
+        Assert.Equal(400, secondFromOne.Value);
+    }
+
     private static ProgramNode ParseProgram(string source)
     {
         var tempFile = Path.GetTempFileName();

@@ -7,7 +7,7 @@ public sealed class Interpreter
 {
     private readonly ProgramNode _program;
     private readonly Dictionary<string, FunctionNode> _functions;
-    private readonly ConcurrentDictionary<int, BlockingCollection<Message>> _mailboxes = new();
+    private readonly ConcurrentDictionary<int, Mailbox> _mailboxes = new();
     private int _nextPid = 0;
 
     private sealed class ReturnSignal : Exception
@@ -31,7 +31,7 @@ public sealed class Interpreter
             throw  new RuntimeException("No main function found.");
         }
         var mainPid = AllocatePid();
-        _mailboxes[mainPid] = new BlockingCollection<Message>();
+        _mailboxes[mainPid] = new Mailbox();
 
         var mainProcess = new RuntimeProcess(mainPid);
 
@@ -251,7 +251,7 @@ public sealed class Interpreter
         {
             throw new RuntimeException($"No process with pid  {targetPid}");
         }
-        mailbox.Add(new Message(SenderPid, value));
+        mailbox.Send(new Message(SenderPid, value));
     }
 
     private RuntimeValues EvalReceive(ReceiveRhsNode rhs, RuntimeProcess process)
@@ -265,21 +265,9 @@ public sealed class Interpreter
         {
             throw new RuntimeException($"No mailbox for pid {process.Pid}");
         }
-        var skipped = new List<Message>();
 
-        while (true)
-        {
-            var msg = mailbox.Take();//blocks if no message in mailbox
-            if(msg.SenderPid == sourcePid.Value)
-            {
-                foreach(var skippedMsg in skipped)
-                {
-                    mailbox.Add(skippedMsg);
-                }
-                return new IntValue(msg.Value);
-            }
-            skipped.Add(msg);
-        }
+        var msg = mailbox.ReceiveFrom(sourcePid.Value);
+        return new IntValue(msg.Value);
     }
     private RuntimeValues EvalSpawn(SpawnRhsNode rhs, RuntimeProcess parentProcess)
     {
@@ -292,7 +280,7 @@ public sealed class Interpreter
             .ToList();
         
         var childPid = AllocatePid();
-        _mailboxes[childPid] = new BlockingCollection<Message>();
+        _mailboxes[childPid] = new Mailbox();
 
         var childProcess = new RuntimeProcess(childPid);
         _ = Task.Run(() =>
