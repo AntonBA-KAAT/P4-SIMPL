@@ -2,10 +2,20 @@ func Int main() {
     Int x = 5;
     Int y = 10;
 
-    if (x < y && y != x) {
+    Bool a = x < y;
+    Bool b = x <= y;
+    Bool c = y > x;
+    Bool d = y >= x;
+    Bool e = x == x;
+    Bool f = x != y;
+
+    Bool g = a && b;
+    Bool h = c || false;
+    Bool i = !false;
+
+    if (g && h && i && e && f) {
         return 1;
     } else {
         return 0;
     }
-}
-            
+}       
