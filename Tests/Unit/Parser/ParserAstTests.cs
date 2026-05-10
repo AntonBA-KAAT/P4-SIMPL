@@ -1,6 +1,6 @@
 using System.IO;
 using Xunit;
-
+[Trait("Category", "Unit")]
 public class ParserAstTests
 {
     [Fact]

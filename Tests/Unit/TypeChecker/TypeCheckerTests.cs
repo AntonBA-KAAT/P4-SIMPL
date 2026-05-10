@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Xunit;
-
+[Trait("Category", "Unit")]
 public class TypeCheckerTests
 {
     [Fact]

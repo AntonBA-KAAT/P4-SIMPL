@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Xunit;
-
+[Trait("Category", "Acceptance")]
 public class RequirementAcceptanceTests
 {
     private static ProgramNode ParseFile(string path)
