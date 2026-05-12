@@ -10,6 +10,7 @@ public sealed class Interpreter
     private readonly ConcurrentDictionary<int, Mailbox> _mailboxes = new();
     private int _nextPid = 0;
     private readonly List<Task> _spawnedTasks = new();
+    private readonly ConcurrentBag<string> _spawnedErrors = new();
 
     private sealed class ReturnSignal : Exception
     {
@@ -40,6 +41,10 @@ public sealed class Interpreter
         if (_spawnedTasks.Count > 0)
         {
             Task.WaitAll(_spawnedTasks.ToArray());
+        }
+        if(!_spawnedErrors.IsEmpty)
+        {
+            throw new RuntimeException(string.Join(Environment.NewLine, _spawnedErrors));
         }
         return result;
     }
@@ -292,9 +297,9 @@ public sealed class Interpreter
             try
             {
                 ExecuteFunction(function,args,childProcess);
-            }catch(Exception ex)
+            }catch (Exception ex)
             {
-                Console.Error.WriteLine($"Runtime error in process {childPid}: {ex.Message}");
+                _spawnedErrors.Add($"Process {childPid} failed: {ex.Message}");
             }
         });
         _spawnedTasks.Add(task);
