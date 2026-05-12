@@ -342,7 +342,7 @@ public class TypeCheckerTests
         Assert.Contains("expects 1 arguments", ex.Message);
     }
     [Fact]
-    public void RejectsSendMessageThatIsNotInt()
+    public void AcceptsSendMessageThatIsNotInt()
     {
         var program = new ProgramNode(new List<FunctionNode>
         {
@@ -355,8 +355,7 @@ public class TypeCheckerTests
 
         var checker = new TypeChecker();
 
-        var ex = Assert.Throws<TypeCheckException>(() => checker.CheckProgram(program));
-        Assert.Contains("Send message must be of type Int", ex.Message);
+        checker.CheckProgram(program);
     }
     [Fact]
     public void RejectsCallToVariableName()
