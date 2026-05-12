@@ -9,6 +9,7 @@ public sealed class Interpreter
     private readonly Dictionary<string, FunctionNode> _functions;
     private readonly ConcurrentDictionary<int, Mailbox> _mailboxes = new();
     private int _nextPid = 0;
+    private readonly List<Task> _spawnedTasks = new();
 
     private sealed class ReturnSignal : Exception
     {
@@ -35,7 +36,12 @@ public sealed class Interpreter
 
         var mainProcess = new RuntimeProcess(mainPid);
 
-        return ExecuteFunction(main, new List<RuntimeValues>(), mainProcess);
+        var result = ExecuteFunction(main, new List<RuntimeValues>(), mainProcess);
+        if (_spawnedTasks.Count > 0)
+        {
+            Task.WaitAll(_spawnedTasks.ToArray());
+        }
+        return result;
     }
 
     private int AllocatePid()
@@ -175,11 +181,9 @@ public sealed class Interpreter
             case SendNode s:
                 var message = EvalExpr(s.Message, process);
                 var target = EvalExpr(s.Target, process);
-                if (message is not IntValue msg)
-                    throw new RuntimeException("send message must be Int");
                 if (target is not PidValue pid)
                     throw new RuntimeException("send target must be Pid");
-                Send(process.Pid, pid.Value, msg.Value);
+                Send(process.Pid, pid.Value, message);
                 break;
             
             case SkipNode:
@@ -245,7 +249,7 @@ public sealed class Interpreter
     }
 
     //Concurrent things
-    private void Send(int SenderPid, int targetPid, int value)
+    private void Send(int SenderPid, int targetPid, RuntimeValues value)
     {
         if(!_mailboxes.TryGetValue(targetPid, out var mailbox))
         {
@@ -267,7 +271,7 @@ public sealed class Interpreter
         }
 
         var msg = mailbox.ReceiveFrom(sourcePid.Value);
-        return new IntValue(msg.Value);
+        return msg.Value;
     }
     private RuntimeValues EvalSpawn(SpawnRhsNode rhs, RuntimeProcess parentProcess)
     {
@@ -283,7 +287,7 @@ public sealed class Interpreter
         _mailboxes[childPid] = new Mailbox();
 
         var childProcess = new RuntimeProcess(childPid);
-        _ = Task.Run(() =>
+        var task = Task.Run(() =>
         {
             try
             {
@@ -293,6 +297,7 @@ public sealed class Interpreter
                 Console.Error.WriteLine($"Runtime error in process {childPid}: {ex.Message}");
             }
         });
+        _spawnedTasks.Add(task);
         return new PidValue(childPid);
     }
 }

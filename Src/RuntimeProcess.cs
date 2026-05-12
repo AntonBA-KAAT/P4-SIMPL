@@ -1,4 +1,4 @@
-public sealed record Message(int SenderPid, int Value);
+public sealed record Message(int SenderPid, RuntimeValues Value);
 public sealed class Mailbox
 {
     private readonly Queue<Message> _messages = new();
