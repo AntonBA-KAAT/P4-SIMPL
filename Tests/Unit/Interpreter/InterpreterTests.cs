@@ -32,9 +32,6 @@ public class InterpreterTests
         Assert.IsType<IntValue>(result);
         Assert.Equal(42, ((IntValue)result).Value);
     }
-
-    // ===== Unit Tests: Mailbox (Low-level component) =====
-
         [Fact]
         public void Interpreter_SimpleBoolReturn()
         {
@@ -410,6 +407,142 @@ public class InterpreterTests
             var msg = mailbox.ReceiveFrom(1);
             Assert.Equal(1, msg.SenderPid);
         }
+    }
+
+    [Fact]
+    public void Interpreter_SpawnSendReceive_ReturnsMessageFromChild()
+    {
+        var childFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "child",
+            Parameters: new List<ParamNode> { new ParamNode(TypeNode.Pid, "parent") },
+            Statements: new List<StatementNode> {
+                new SendNode(new NumberNode(123), new VarNode("parent")),
+                new ReturnNode(new NumberNode(0))
+            }
+        );
+
+        var mainFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "main",
+            Parameters: new List<ParamNode>(),
+            Statements: new List<StatementNode> {
+                new DeclNode(TypeNode.Pid, "childPid", new SpawnRhsNode("child", new List<ExprNode> { new SelfNode() })),
+                new DeclNode(TypeNode.Int, "msg", new ReceiveRhsNode(new VarNode("childPid"))),
+                new ReturnNode(new VarNode("msg"))
+            }
+        );
+
+        var program = new ProgramNode(new List<FunctionNode> { childFunc, mainFunc });
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(123, ((IntValue)result).Value);
+    }
+
+    [Fact]
+    public void Interpreter_MultipleChildren_SumMessages()
+    {
+        var childFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "child_sum",
+            Parameters: new List<ParamNode> { new ParamNode(TypeNode.Pid, "parent"), new ParamNode(TypeNode.Int, "val") },
+            Statements: new List<StatementNode> {
+                new SendNode(new VarNode("val"), new VarNode("parent")),
+                new ReturnNode(new NumberNode(0))
+            }
+        );
+
+        var mainFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "main",
+            Parameters: new List<ParamNode>(),
+            Statements: new List<StatementNode> {
+                new DeclNode(TypeNode.Pid, "c1", new SpawnRhsNode("child_sum", new List<ExprNode> { new SelfNode(), new NumberNode(10) })),
+                new DeclNode(TypeNode.Pid, "c2", new SpawnRhsNode("child_sum", new List<ExprNode> { new SelfNode(), new NumberNode(20) })),
+                new DeclNode(TypeNode.Pid, "c3", new SpawnRhsNode("child_sum", new List<ExprNode> { new SelfNode(), new NumberNode(30) })),
+                new DeclNode(TypeNode.Int, "a", new ReceiveRhsNode(new VarNode("c1"))),
+                new DeclNode(TypeNode.Int, "b", new ReceiveRhsNode(new VarNode("c2"))),
+                new DeclNode(TypeNode.Int, "c", new ReceiveRhsNode(new VarNode("c3"))),
+                new DeclNode(TypeNode.Int, "sum", new ExprRhsNode(new BinaryExprNode("+", new BinaryExprNode("+", new VarNode("a"), new VarNode("b")), new VarNode("c")))),
+                new ReturnNode(new VarNode("sum"))
+            }
+        );
+
+        var program = new ProgramNode(new List<FunctionNode> { childFunc, mainFunc });
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(60, ((IntValue)result).Value);
+    }
+
+    [Fact]
+    public void Interpreter_MessageOrderFromSameSender_IsPreserved()
+    {
+        var childFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "child_order",
+            Parameters: new List<ParamNode> { new ParamNode(TypeNode.Pid, "parent") },
+            Statements: new List<StatementNode> {
+                new SendNode(new NumberNode(1), new VarNode("parent")),
+                new SendNode(new NumberNode(2), new VarNode("parent")),
+                new ReturnNode(new NumberNode(0))
+            }
+        );
+
+        var mainFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "main",
+            Parameters: new List<ParamNode>(),
+            Statements: new List<StatementNode> {
+                new DeclNode(TypeNode.Pid, "childPid", new SpawnRhsNode("child_order", new List<ExprNode> { new SelfNode() })),
+                new DeclNode(TypeNode.Int, "first", new ReceiveRhsNode(new VarNode("childPid"))),
+                new DeclNode(TypeNode.Int, "second", new ReceiveRhsNode(new VarNode("childPid"))),
+                new DeclNode(TypeNode.Int, "combined", new ExprRhsNode(new BinaryExprNode("+", new BinaryExprNode("*", new VarNode("first"), new NumberNode(10)), new VarNode("second")))),
+                new ReturnNode(new VarNode("combined"))
+            }
+        );
+
+        var program = new ProgramNode(new List<FunctionNode> { childFunc, mainFunc });
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(12, ((IntValue)result).Value);
+    }
+
+    [Fact]
+    public void Interpreter_ChildSendsItsPid_MessageIsPidValue()
+    {
+        var childFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "child_pid",
+            Parameters: new List<ParamNode> { new ParamNode(TypeNode.Pid, "parent") },
+            Statements: new List<StatementNode> {
+                new SendNode(new SelfNode(), new VarNode("parent")),
+                new ReturnNode(new NumberNode(0))
+            }
+        );
+
+        var mainFunc = new FunctionNode(
+            ReturnType: TypeNode.Pid,
+            Name: "main",
+            Parameters: new List<ParamNode>(),
+            Statements: new List<StatementNode> {
+                new DeclNode(TypeNode.Pid, "childPid", new SpawnRhsNode("child_pid", new List<ExprNode> { new SelfNode() })),
+                new DeclNode(TypeNode.Pid, "msg", new ReceiveRhsNode(new VarNode("childPid"))),
+                new ReturnNode(new VarNode("msg"))
+            }
+        );
+
+        var program = new ProgramNode(new List<FunctionNode> { childFunc, mainFunc });
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<PidValue>(result);
+        Assert.Equal(((PidValue)result).Value, ((PidValue)result).Value); // trivial check that it's a PidValue
     }
 
     // ===== Unit Tests: RuntimeProcess (Isolated process state) =====
