@@ -111,4 +111,46 @@ public class RequirementAcceptanceTests
         Assert.IsType<IntValue>(result);
         Assert.Equal(1, ((IntValue)result).Value);
     }
+    [Fact]
+    public void MustHave_PassingPidsAsMessages_Works()
+    {
+        var program = ParseFile("Examples/fromOnetoAnother.simtl");
+
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(0, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void MustHave_ComplexWorkflow_WithLoopsAndConditionals()
+    {
+        var program = ParseFile("Examples/full_showcase.simtl");
+
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(15, ((IntValue)result).Value);
+    }
+    [Fact]
+    public void MustHave_ConcurrentBoolReceive_Works()
+    {
+        var program = ParseFile("Examples/test_concurrency.simtl");
+
+        var checker = new TypeChecker();
+        checker.CheckProgram(program);
+
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(1, ((IntValue)result).Value);
+    }
 }

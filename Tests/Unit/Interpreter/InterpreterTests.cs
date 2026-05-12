@@ -1,9 +1,291 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Xunit;
 [Trait("Category", "Unit")]
 public class InterpreterTests
 {
+    [Fact]
+    public void Interpreter_MissingMainThrowsRuntimeException()
+    {
+        var programWithoutMain = new ProgramNode(new List<FunctionNode>());
+        var interpreter = new Interpreter(programWithoutMain);
+
+        var ex = Assert.Throws<RuntimeException>(() => interpreter.Run());
+        Assert.Contains("No main function found", ex.Message);
+    }
+
+    [Fact]
+    public void Interpreter_SimpleIntReturn()
+    {
+        var mainFunc = new FunctionNode(
+            ReturnType: TypeNode.Int,
+            Name: "main",
+            Parameters: new List<ParamNode>(),
+            Statements: new List<StatementNode> {
+                new ReturnNode(new NumberNode(42))
+            }
+        );
+        var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+        var interpreter = new Interpreter(program);
+        var result = interpreter.Run();
+
+        Assert.IsType<IntValue>(result);
+        Assert.Equal(42, ((IntValue)result).Value);
+    }
+
+    // ===== Unit Tests: Mailbox (Low-level component) =====
+
+        [Fact]
+        public void Interpreter_SimpleBoolReturn()
+        {
+            // func Bool main() { return true; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Bool,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new ReturnNode(new BoolNode(true))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<BoolValue>(result);
+            Assert.True(((BoolValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_VariableDeclarationAndReturn()
+        {
+            // func Int main() { Int x = 10; return x; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new DeclNode(TypeNode.Int, "x", new ExprRhsNode(new NumberNode(10))),
+                    new ReturnNode(new VarNode("x"))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(10, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_VariableAssignment()
+        {
+            // func Int main() { Int x = 5; x = 10; return x; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new DeclNode(TypeNode.Int, "x", new ExprRhsNode(new NumberNode(5))),
+                    new AssignNode(new VarNode("x"), new ExprRhsNode(new NumberNode(10))),
+                    new ReturnNode(new VarNode("x"))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(10, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_ArithmeticAddition()
+        {
+            // func Int main() { return 5 + 3; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new ReturnNode(new BinaryExprNode("+", new NumberNode(5), new NumberNode(3)))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(8, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_ArithmeticMultiplication()
+        {
+            // func Int main() { return 5 * 3; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new ReturnNode(new BinaryExprNode("*", new NumberNode(5), new NumberNode(3)))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(15, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_UnaryMinus()
+        {
+            // func Int main() { return -5; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new ReturnNode(new UnaryExprNode("-", new NumberNode(5)))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(-5, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_BooleanNot()
+        {
+            // func Bool main() { return !false; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Bool,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new ReturnNode(new UnaryExprNode("!", new BoolNode(false)))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<BoolValue>(result);
+            Assert.True(((BoolValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_IfStatementTrueBranch()
+        {
+            // func Int main() { if (true) { return 10; } else { return 20; } }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new IfNode(
+                        Condition: new BoolNode(true),
+                        ThenBranch: new List<StatementNode> { new ReturnNode(new NumberNode(10)) },
+                        ElseBranch: new List<StatementNode> { new ReturnNode(new NumberNode(20)) }
+                    )
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(10, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_IfStatementFalseBranch()
+        {
+            // func Int main() { if (false) { return 10; } else { return 20; } }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new IfNode(
+                        Condition: new BoolNode(false),
+                        ThenBranch: new List<StatementNode> { new ReturnNode(new NumberNode(10)) },
+                        ElseBranch: new List<StatementNode> { new ReturnNode(new NumberNode(20)) }
+                    )
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(20, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_WhileLoopCounts()
+        {
+            // func Int main() { Int x = 0; while (x < 3) { x = x + 1; } return x; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new DeclNode(TypeNode.Int, "x", new ExprRhsNode(new NumberNode(0))),
+                    new WhileNode(
+                        Condition: new BinaryExprNode("<", new VarNode("x"), new NumberNode(3)),
+                        Body: new List<StatementNode> {
+                            new AssignNode(
+                                new VarNode("x"),
+                                new ExprRhsNode(new BinaryExprNode("+", new VarNode("x"), new NumberNode(1)))
+                            )
+                        }
+                    ),
+                    new ReturnNode(new VarNode("x"))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(3, ((IntValue)result).Value);
+        }
+
+        [Fact]
+        public void Interpreter_WhileLoopExitsWhenConditionFalse()
+        {
+            // func Int main() { Int x = 10; while (x > 5) { x = x - 1; } return x; }
+            var mainFunc = new FunctionNode(
+                ReturnType: TypeNode.Int,
+                Name: "main",
+                Parameters: new List<ParamNode>(),
+                Statements: new List<StatementNode> {
+                    new DeclNode(TypeNode.Int, "x", new ExprRhsNode(new NumberNode(10))),
+                    new WhileNode(
+                        Condition: new BinaryExprNode(">", new VarNode("x"), new NumberNode(5)),
+                        Body: new List<StatementNode> {
+                            new AssignNode(
+                                new VarNode("x"),
+                                new ExprRhsNode(new BinaryExprNode("-", new VarNode("x"), new NumberNode(1)))
+                            )
+                        }
+                    ),
+                    new ReturnNode(new VarNode("x"))
+                }
+            );
+            var program = new ProgramNode(new List<FunctionNode> { mainFunc });
+            var interpreter = new Interpreter(program);
+            var result = interpreter.Run();
+
+            Assert.IsType<IntValue>(result);
+            Assert.Equal(5, ((IntValue)result).Value);
+        }
+
     [Fact]
     public void MailboxReceiveFrom_RemovesFirstMatchingSenderEvenWhenNotAtHead()
     {
@@ -51,271 +333,126 @@ public class InterpreterTests
         Assert.Equal(new IntValue(400), secondFromOne.Value);
     }
 
-    private static ProgramNode ParseProgram(string source)
+    [Fact]
+    public void Mailbox_ReceiveFromSpecificSender_IgnoresOthers()
     {
-        var tempFile = Path.GetTempFileName();
-        File.WriteAllText(tempFile, source);
-        try
+        var mailbox = new Mailbox();
+
+        mailbox.Send(new Message(1, new IntValue(100)));
+        mailbox.Send(new Message(2, new IntValue(200)));
+        mailbox.Send(new Message(3, new IntValue(300)));
+        mailbox.Send(new Message(1, new IntValue(101)));
+
+        var msg1 = mailbox.ReceiveFrom(1);
+        Assert.Equal(1, msg1.SenderPid);
+        Assert.Equal(100, ((IntValue)msg1.Value).Value);
+
+        var msg3 = mailbox.ReceiveFrom(3);
+        Assert.Equal(3, msg3.SenderPid);
+        Assert.Equal(300, ((IntValue)msg3.Value).Value);
+
+        var msg2 = mailbox.ReceiveFrom(2);
+        Assert.Equal(2, msg2.SenderPid);
+        Assert.Equal(200, ((IntValue)msg2.Value).Value);
+
+        var msg1b = mailbox.ReceiveFrom(1);
+        Assert.Equal(1, msg1b.SenderPid);
+        Assert.Equal(101, ((IntValue)msg1b.Value).Value);
+    }
+
+    [Fact]
+    public void Mailbox_BooleanValueMessages()
+    {
+        var mailbox = new Mailbox();
+
+        mailbox.Send(new Message(1, new BoolValue(true)));
+        mailbox.Send(new Message(2, new BoolValue(false)));
+
+        var msg1 = mailbox.ReceiveFrom(1);
+        Assert.IsType<BoolValue>(msg1.Value);
+        Assert.True(((BoolValue)msg1.Value).Value);
+
+        var msg2 = mailbox.ReceiveFrom(2);
+        Assert.IsType<BoolValue>(msg2.Value);
+        Assert.False(((BoolValue)msg2.Value).Value);
+    }
+
+    [Fact]
+    public void Mailbox_PidValueMessages()
+    {
+        var mailbox = new Mailbox();
+
+        mailbox.Send(new Message(1, new PidValue(42)));
+        mailbox.Send(new Message(2, new PidValue(99)));
+
+        var msg1 = mailbox.ReceiveFrom(1);
+        Assert.IsType<PidValue>(msg1.Value);
+            Assert.Equal(42, ((PidValue)msg1.Value).Value);
+
+        var msg2 = mailbox.ReceiveFrom(2);
+        Assert.IsType<PidValue>(msg2.Value);
+            Assert.Equal(99, ((PidValue)msg2.Value).Value);
+    }
+
+    [Fact]
+    public void Mailbox_LargeNumberOfMessages()
+    {
+        var mailbox = new Mailbox();
+        const int messageCount = 100;
+
+        for (int i = 0; i < messageCount; i++)
         {
-            var scanner = new MyLangAstGen.Scanner(tempFile);
-            var parser = new MyLangAstGen.Parser(scanner);
-            parser.Parse();
-            Assert.Equal(0, parser.errors.count);
-            Assert.NotNull(parser.ProgramResult);
-            return parser.ProgramResult!;
+            mailbox.Send(new Message(1, new IntValue(i)));
         }
-        finally
+
+        for (int i = 0; i < messageCount; i++)
         {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
+            var msg = mailbox.ReceiveFrom(1);
+            Assert.Equal(1, msg.SenderPid);
         }
     }
 
+    // ===== Unit Tests: RuntimeProcess (Isolated process state) =====
     [Fact]
-    public void DeclarationAndReturn_IntegerValue()
+    public void RuntimeProcess_CreatedWithPid()
     {
-        const string source = """
-            func Int main() {
-                Int x = 5;
-                x = x + 2;
-                return x;
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(7, ((IntValue)result).Value);
+        var process = new RuntimeProcess(42);
+        
+        Assert.Equal(42, process.Pid);
+        Assert.NotNull(process.Store);
+        Assert.Empty(process.Store);
     }
 
     [Fact]
-    public void SpawnReturnsPid()
+    public void RuntimeProcess_StoresAndRetrievesVariables()
     {
-        const string source = """
-            func Int worker(Int n) { return n; }
-            func Pid main() { Pid p = spawn worker(1); return p; }
-            """;
+        var process = new RuntimeProcess(1);
+        process.Store["x"] = new IntValue(100);
 
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<PidValue>(result);
-        Assert.True(((PidValue)result).Value > 0);
+        Assert.True(process.Store.ContainsKey("x"));
+        Assert.Equal(100, ((IntValue)process.Store["x"]).Value);
     }
 
     [Fact]
-    public void SendReceiveBetweenProcesses()
+    public void RuntimeProcess_IsolatesMemoryFromOtherProcesses()
     {
-        const string source = """
-            func Int worker(Pid parent) { Int n = receive(parent); send n to parent; return 0; }
-            func Int main() { Pid w = spawn worker(self); send 7 to w; Int r = receive(w); return r; }
-            """;
+        var p1 = new RuntimeProcess(1);
+        var p2 = new RuntimeProcess(2);
 
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
+        p1.Store["var"] = new IntValue(100);
+        p2.Store["var"] = new IntValue(200);
 
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(7, ((IntValue)result).Value);
+        Assert.Equal(100, ((IntValue)p1.Store["var"]).Value);
+        Assert.Equal(200, ((IntValue)p2.Store["var"]).Value);
     }
+
     [Fact]
-    public void MultipleWorkersCanSendToMain()
+    public void RuntimeProcess_UpdatesExistingVariables()
     {
-        const string source = """
-            func Int worker(Pid parent) {
-                send 1 to parent;
-                return 0;
-            }
+        var process = new RuntimeProcess(1);
+        process.Store["x"] = new IntValue(5);
+        process.Store["x"] = new IntValue(10);
 
-            func Int main() {
-                Pid p1 = spawn worker(self);
-                Pid p2 = spawn worker(self);
-
-                Int a = receive(p1);
-                Int b = receive(p2);
-
-                return a + b;
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(2, ((IntValue)result).Value);
-    }
-    [Fact]
-    public void SpawnedProcessCanUseSelf()
-    {
-        const string source = """
-            func Int worker(Pid parent) {
-                send 5 to parent;
-                return 0;
-            }
-
-            func Int main() {
-                Pid p = spawn worker(self);
-                Int x = receive(p);
-                return x;
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(5, ((IntValue)result).Value);
-    }
-    [Fact]
-    public void FunctionCallReturnsValue()
-    {
-        const string source = """
-            func Int inc(Int n) {
-                return n + 1;
-            }
-
-            func Int main() {
-                Int x = call inc(41);
-                return x;
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(42, ((IntValue)result).Value);
-    }
-    [Fact]
-    public void IfFalseExecutesElseBranch()
-    {
-        const string source = """
-            func Int main() {
-                if (false) {
-                    return 1;
-                } else {
-                    return 2;
-                }
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(2, ((IntValue)result).Value);
-    }
-    [Fact]
-    public void WhileLoopComputesExpectedResult()
-    {
-        const string source = """
-            func Int main() {
-                Int x = 0;
-
-                while (x < 5) {
-                    x = x + 1;
-                }
-
-                return x;
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(5, ((IntValue)result).Value);
-    }
-    [Fact]
-    public void UnaryMinusWorks()
-    {
-        const string source = """
-            func Int main() {
-                Int x = -5;
-                return x;
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(-5, ((IntValue)result).Value);
-    }
-    [Fact]
-    public void BooleanNotWorks()
-    {
-        const string source = """
-            func Int main() {
-                if (!false) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-        var result = interpreter.Run();
-
-        Assert.IsType<IntValue>(result);
-        Assert.Equal(1, ((IntValue)result).Value);
-    }
-    [Fact]
-    public void MissingMainThrowsRuntimeException()
-    {
-        const string source = """
-            func Int other() {
-                return 0;
-            }
-            """;
-
-        var program = ParseProgram(source);
-        var checker = new TypeChecker();
-        checker.CheckProgram(program);
-
-        var interpreter = new Interpreter(program);
-
-        var ex = Assert.Throws<RuntimeException>(() => interpreter.Run());
-        Assert.Contains("No main function found", ex.Message);
+        Assert.Equal(10, ((IntValue)process.Store["x"]).Value);
     }
 }
