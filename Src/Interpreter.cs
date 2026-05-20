@@ -36,6 +36,7 @@ public sealed class Interpreter
         _mailboxes[mainPid] = new Mailbox();
 
         var mainProcess = new RuntimeProcess(mainPid);
+        //Console.WriteLine($"Process {mainProcess.Pid} running on C# thread {Environment.CurrentManagedThreadId}"); //only for debugging, to see parallelism in action
 
         var result = ExecuteFunction(main, new List<RuntimeValues>(), mainProcess);
         if (_spawnedTasks.Count > 0)
@@ -294,6 +295,7 @@ public sealed class Interpreter
         var childProcess = new RuntimeProcess(childPid);
         var task = Task.Run(() =>
         {
+            //Console.WriteLine($"Process {childProcess.Pid} running on C# thread {Environment.CurrentManagedThreadId}"); //only for debugging, to see parallelism in action
             try
             {
                 ExecuteFunction(function,args,childProcess);
