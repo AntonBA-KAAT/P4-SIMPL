@@ -3,7 +3,7 @@ using System.IO;
 
 if (args.Length == 0)
 {
-    Console.WriteLine("Usage: dotnet run --project Src -- <path-to-.simtl-file>");
+    Console.WriteLine("Usage: dotnet run --project Src -- <path-to-.simpl-file>");
     return;
 }
 
@@ -45,6 +45,7 @@ try
 
     var interpreter = new Interpreter(parser.ProgramResult);
     var result = interpreter.Run();
+    Console.WriteLine($"Program returned: {result.ToString()}");
 }
 catch (TypeCheckException ex)
 {
