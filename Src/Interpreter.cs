@@ -7,8 +7,10 @@ public sealed class Interpreter
 {
     private readonly ProgramNode _program;
     private readonly Dictionary<string, FunctionNode> _functions;
-    private readonly ConcurrentDictionary<int, BlockingCollection<Message>> _mailboxes = new();
+    private readonly ConcurrentDictionary<int, Mailbox> _mailboxes = new();
     private int _nextPid = 0;
+    private readonly List<Task> _spawnedTasks = new();
+    private readonly ConcurrentBag<string> _spawnedErrors = new();
 
     private sealed class ReturnSignal : Exception
     {
@@ -31,11 +33,21 @@ public sealed class Interpreter
             throw  new RuntimeException("No main function found.");
         }
         var mainPid = AllocatePid();
-        _mailboxes[mainPid] = new BlockingCollection<Message>();
+        _mailboxes[mainPid] = new Mailbox();
 
         var mainProcess = new RuntimeProcess(mainPid);
+        //Console.WriteLine($"Process {mainProcess.Pid} running on C# thread {Environment.CurrentManagedThreadId}"); //only for debugging, to see parallelism in action
 
-        return ExecuteFunction(main, new List<RuntimeValues>(), mainProcess);
+        var result = ExecuteFunction(main, new List<RuntimeValues>(), mainProcess);
+        if (_spawnedTasks.Count > 0)
+        {
+            Task.WaitAll(_spawnedTasks.ToArray());
+        }
+        if(!_spawnedErrors.IsEmpty)
+        {
+            throw new RuntimeException(string.Join(Environment.NewLine, _spawnedErrors));
+        }
+        return result;
     }
 
     private int AllocatePid()
@@ -158,9 +170,9 @@ public sealed class Interpreter
                 break;
             
             case DeclNode d:
-                if (!process.Store.ContainsKey(d.Name))
+                if (process.Store.ContainsKey(d.Name))
                 {
-                    throw new RuntimeException($"Undefined variable '{d.Name}'");
+                    throw new RuntimeException($"Variable '{d.Name}' already declared in this scope");
                 }
                 process.Store[d.Name] = EvalRhs(d.Value, process);
                 break;
@@ -171,16 +183,13 @@ public sealed class Interpreter
             
             case ReturnNode r:
                 throw new ReturnSignal(EvalExpr(r.Value, process));
-                break;
 
             case SendNode s:
                 var message = EvalExpr(s.Message, process);
                 var target = EvalExpr(s.Target, process);
-                if(message is not IntValue msg)
-                    throw new RuntimeException("send message must be Int");
-                if(message is not PidValue pid)
+                if (target is not PidValue pid)
                     throw new RuntimeException("send target must be Pid");
-                Send(process.Pid, pid.Value, msg.Value);
+                Send(process.Pid, pid.Value, message);
                 break;
             
             case SkipNode:
@@ -246,13 +255,13 @@ public sealed class Interpreter
     }
 
     //Concurrent things
-    private void Send(int SenderPid, int targetPid, int value)
+    private void Send(int SenderPid, int targetPid, RuntimeValues value)
     {
         if(!_mailboxes.TryGetValue(targetPid, out var mailbox))
         {
             throw new RuntimeException($"No process with pid  {targetPid}");
         }
-        mailbox.Add(new Message(SenderPid, value));
+        mailbox.Send(new Message(SenderPid, value));
     }
 
     private RuntimeValues EvalReceive(ReceiveRhsNode rhs, RuntimeProcess process)
@@ -266,21 +275,9 @@ public sealed class Interpreter
         {
             throw new RuntimeException($"No mailbox for pid {process.Pid}");
         }
-        var skipped = new List<Message>();
 
-        while (true)
-        {
-            var msg = mailbox.Take();//blocks if no message in mailbox
-            if(msg.SenderPid == sourcePid.Value)
-            {
-                foreach(var skippedMsg in skipped)
-                {
-                    mailbox.Add(skippedMsg);
-                }
-                return new IntValue(msg.Value);
-            }
-            skipped.Add(msg);
-        }
+        var msg = mailbox.ReceiveFrom(sourcePid.Value);
+        return msg.Value;
     }
     private RuntimeValues EvalSpawn(SpawnRhsNode rhs, RuntimeProcess parentProcess)
     {
@@ -293,19 +290,21 @@ public sealed class Interpreter
             .ToList();
         
         var childPid = AllocatePid();
-        _mailboxes[childPid] = new BlockingCollection<Message>();
+        _mailboxes[childPid] = new Mailbox();
 
         var childProcess = new RuntimeProcess(childPid);
-        _ = Task.Run(() =>
+        var task = Task.Run(() =>
         {
+            //Console.WriteLine($"Process {childProcess.Pid} running on C# thread {Environment.CurrentManagedThreadId}"); //only for debugging, to see parallelism in action
             try
             {
                 ExecuteFunction(function,args,childProcess);
-            }catch(Exception ex)
+            }catch (Exception ex)
             {
-                Console.Error.WriteLine($"Runtime error in process {childPid}: {ex.Message}");
+                _spawnedErrors.Add($"Process {childPid} failed: {ex.Message}");
             }
         });
+        _spawnedTasks.Add(task);
         return new PidValue(childPid);
     }
 }

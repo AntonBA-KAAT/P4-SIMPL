@@ -6,10 +6,15 @@ CHARACTERS
   newline   = '\n'.
   cr        = '\r'.
   tab       = '\t'.
+  newLine   = cr + newline.
+  notNewLine = ANY - newLine.
 
 TOKENS
   ident     = letter { letter | digit | "_" }.
   number    = digit { digit }.
+
+PRAGMAS
+  percentComment = "%" { notNewLine } newLine.
 
 IGNORE " " + tab + newline + cr
 

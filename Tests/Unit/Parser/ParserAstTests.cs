@@ -1,6 +1,6 @@
 using System.IO;
 using Xunit;
-
+[Trait("Category", "Unit")]
 public class ParserAstTests
 {
     [Fact]
@@ -10,10 +10,10 @@ public class ParserAstTests
             func Int main() {
                 Int x = 1;
                 Int y = 3;
-                if (x < y) { print(x) } else { skip };
-                while (x < 10) { x = x + 1 };
+                if (x < y) { print(x); } else { skip; }
+                while (x < 10) { x = x + 1; }
                 send x to self;
-                return x
+                return x;
             }
             """;
 
@@ -39,7 +39,7 @@ public class ParserAstTests
         const string source = """
             func Int main() {
                 Int x = 1 + 2 * 3;
-                return x
+                return x;
             }
             """;
 
@@ -61,8 +61,8 @@ public class ParserAstTests
     {
         const string source = """
             func Int main() {
-                if (true) { } else { };
-                return 0
+                if (true) { } else { }
+                return 0;
             }
             """;
 
@@ -75,6 +75,23 @@ public class ParserAstTests
     }
 
     [Fact]
+    public void IgnoresPercentComments()
+    {
+        const string source = """
+            % leading comment
+            func Int main() {
+                Int x = 1; % inline comment
+                % comment between statements
+                return x;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        var fn = Assert.Single(program.Functions);
+        Assert.Equal(2, fn.Statements.Count);
+    }
+
+    [Fact]
     public void ParsesReceiveSpawnAndCallRhs()
     {
         const string source = """
@@ -83,7 +100,7 @@ public class ParserAstTests
                 p = spawn worker(n);
                 n = receive(self);
                 n = call inc(n);
-                return p
+                return p;
             }
             """;
 
@@ -112,10 +129,10 @@ public class ParserAstTests
             func Int main() {
                 Int x = 0;
                 while (x < 3) {
-                    if (x == 1) { print(x) } else { skip };
-                    x = x + 1
-                };
-                return x
+                    if (x == 1) { print(x); } else { skip; }
+                    x = x + 1;
+                }
+                return x;
             }
             """;
 
@@ -136,12 +153,12 @@ public class ParserAstTests
     {
         const string source = """
             func Int inc(Int n) {
-                return n + 1
+                return n + 1;
             }
 
             func Int main() {
                 Int x = call inc(41);
-                return x
+                return x;
             }
             """;
 
@@ -161,7 +178,7 @@ public class ParserAstTests
         const string source = """
             func Bool main() {
                 Bool b = true || false && false;
-                return b
+                return b;
             }
             """;
 
@@ -182,12 +199,12 @@ public class ParserAstTests
     {
         const string source = """
             func Int add(Int a, Int b) {
-                return a + b
+                return a + b;
             }
 
             func Int main() {
                 Int z = call add(1, 2);
-                return z
+                return z;
             }
             """;
 
@@ -212,17 +229,17 @@ public class ParserAstTests
     {
         const string source = """
             func Int add(Int a, Int b) {
-                return a + b
+                return a + b;
             }
 
             func Int main() {
                 Int x = call add(1, 2);
                 Pid p = spawn worker(x);
                 x = receive(self);
-                if (x < 10) { print(x) } else { skip };
-                while (x < 12) { x = x + 1 };
+                if (x < 10) { print(x); } else { skip; }
+                while (x < 12) { x = x + 1; }
                 send x to self;
-                return x
+                return x;
             }
             """;
 
@@ -257,6 +274,67 @@ public class ParserAstTests
 
         var actualLines = printed.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
         Assert.Equal(expectedLines, actualLines);
+    }
+    [Fact]
+    public void ParsesNestedIfInsideWhile()
+    {
+        const string source = """
+        func Int main() {
+            while (true) {
+                if (true) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            return 0;
+        }
+        """;
+
+        var program = ParseProgram(source);
+        var fn = Assert.Single(program.Functions);
+
+        var whileStmt = Assert.IsType<WhileNode>(fn.Statements[0]);
+        Assert.Single(whileStmt.Body);
+
+        var ifStmt = Assert.IsType<IfNode>(whileStmt.Body[0]);
+        Assert.Single(ifStmt.ThenBranch);
+        Assert.Single(ifStmt.ElseBranch);
+    }
+    [Fact]
+    public void ParsesSpawnReceiveAndCallInDeclarations()
+    {
+        const string source = """
+            func Int inc(Int n) {
+                return n + 1;
+            }
+
+            func Int worker(Pid parent) {
+                Int x = receive(parent);
+                return x;
+            }
+
+            func Int main() {
+                Pid p = spawn worker(self);
+                Int x = receive(p);
+                Int y = call inc(x);
+                return y;
+            }
+            """;
+
+        var program = ParseProgram(source);
+        Assert.Equal(3, program.Functions.Count);
+
+        var main = program.Functions[2];
+
+        var spawnDecl = Assert.IsType<DeclNode>(main.Statements[0]);
+        Assert.IsType<SpawnRhsNode>(spawnDecl.Value);
+
+        var receiveDecl = Assert.IsType<DeclNode>(main.Statements[1]);
+        Assert.IsType<ReceiveRhsNode>(receiveDecl.Value);
+
+        var callDecl = Assert.IsType<DeclNode>(main.Statements[2]);
+        Assert.IsType<CallRhsNode>(callDecl.Value);
     }
 
     private static ProgramNode ParseProgram(string source)

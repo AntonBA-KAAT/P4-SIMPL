@@ -1,0 +1,13 @@
+func Int main() {
+    Int x = 0;
+
+    while (x < 5) {
+        x = x + 1;
+    }
+
+    if (x == 5) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
