@@ -1,0 +1,40 @@
+func Int sumPart(Pid parent, Int start, Int end, Int marker) {
+    Int i = start;
+    Int sum = 0;
+
+    while (i <= end) {
+        if (i == marker) {
+            print(marker);
+        } else {
+            skip;
+        }
+
+        sum = sum + i;
+        i = i + 1;
+    }
+
+    send sum to parent;
+    return 0;
+}
+
+func Int main() {
+    Pid p1 = spawn sumPart(self, 1, 2500, 500);
+    Pid p2 = spawn sumPart(self, 2501, 5000, 3000);
+    Pid p3 = spawn sumPart(self, 5001, 7500, 5500);
+    Pid p4 = spawn sumPart(self, 7501, 10000, 8000);
+
+    Int s1 = receive(p1);
+    Int s2 = receive(p2);
+    Int s3 = receive(p3);
+    Int s4 = receive(p4);
+
+    Int total = s1 + s2 + s3 + s4;
+
+    print(s1);
+    print(s2);
+    print(s3);
+    print(s4);
+    print(total);
+
+    return total;
+}
