@@ -45,7 +45,10 @@ public sealed record ExprRhsNode(ExprNode Value) : RhsNode;
 
 public abstract record ExprNode : AstNode;
 
-public sealed record NumberNode(int Value) : ExprNode;
+public sealed record NumberNode(int Value) : ExprNode
+{
+	public NumberNode(string value) : this(int.Parse(value)) { }
+}
 
 public sealed record BoolNode(bool Value) : ExprNode;
 

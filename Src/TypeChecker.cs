@@ -135,13 +135,13 @@ public sealed class TypeChecker
             _ => throw new TypeCheckException($"Unsupported binary operator: {expr.Operator}")
         };
     }
-    private TypeNode CheckRhs(RhsNode rhs, Dictionary<string, BindingType> env)
+    private TypeNode CheckRhs(RhsNode rhs, Dictionary<string, BindingType> env, TypeNode? expectedType = null)
     {
         return rhs switch
         {
             ExprRhsNode e => CheckExpr(e.Value, env),
             
-            ReceiveRhsNode r => CheckRecieveRhs(r, env),
+            ReceiveRhsNode r => CheckReceiveRhs(r, env, expectedType),
 
             SpawnRhsNode s => CheckSpawnRhs(s, env),
 
@@ -150,14 +150,19 @@ public sealed class TypeChecker
             _ => throw new TypeCheckException($"Unsupported RHS node: {rhs.GetType().Name}")
         };
     }
-    private TypeNode CheckRecieveRhs(ReceiveRhsNode rhs, Dictionary<string, BindingType> env)
+    private TypeNode CheckReceiveRhs(ReceiveRhsNode rhs, Dictionary<string, BindingType> env, TypeNode? expectedType)
     {
         var sourceType = CheckExpr(rhs.Source, env);
         if (sourceType != TypeNode.Pid)
         {
             throw new TypeCheckException($"Receive source must be of type Pid, but got {sourceType}.");
         }
-        return TypeNode.Int; 
+
+        if(expectedType is null)
+        {
+            throw new TypeCheckException($"Receive must be used in a context where the expected type is known.");
+        }
+        return expectedType.Value; 
     }
     private TypeNode CheckSpawnRhs(SpawnRhsNode rhs, Dictionary<string, BindingType> env)
     {
@@ -234,7 +239,7 @@ public sealed class TypeChecker
             case AssignNode a:
                 {
                     var lhsType = LookupVariable(a.Name.Name, env);
-                    var rhsType = CheckRhs(a.Value, env);
+                    var rhsType = CheckRhs(a.Value, env, lhsType);
                     if(lhsType != rhsType)
                     {
                         throw new TypeCheckException($"Cannot assign value of type {rhsType} to variable '{a.Name.Name}' of type {lhsType}.");
@@ -248,7 +253,7 @@ public sealed class TypeChecker
                         throw new TypeCheckException($"Variable '{d.Name}' is already declared in this scope.");
                     }
 
-                    var rhs = CheckRhs(d.Value, env);
+                    var rhs = CheckRhs(d.Value, env, d.DeclType);
                     if(rhs != d.DeclType)
                     {
                         throw new TypeCheckException($"Cannot initialize variable '{d.Name}' of type {d.DeclType} with value of type {rhs}.");
@@ -277,11 +282,6 @@ public sealed class TypeChecker
                 {
                     var messageType = CheckExpr(s.Message, env);
                     var targetType = CheckExpr(s.Target, env);
-
-                    if(messageType != TypeNode.Int)
-                    {
-                        throw new TypeCheckException($"Send message must be of type Int, but got {messageType}.");
-                    }
                     if(targetType != TypeNode.Pid)
                     {
                         throw new TypeCheckException($"Send target must be of type Pid, but got {targetType}.");

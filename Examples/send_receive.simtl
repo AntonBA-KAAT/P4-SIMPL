@@ -1,0 +1,18 @@
+func Int worker(Pid parent) {
+    print(self);
+    Int n = receive(parent);
+    print(n);
+    n = n / 7;
+    send n to parent;
+    return 0;
+}
+
+func Int main() {
+    Pid w = spawn worker(self);
+    Int x = 7;
+    send x to w;
+    print(x + 1);
+    Int r = receive(w);
+    print(r);
+    return r;
+}

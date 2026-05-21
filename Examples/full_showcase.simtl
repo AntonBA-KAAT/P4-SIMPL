@@ -1,0 +1,33 @@
+func Int worker(Pid parent) {
+    Int seed = receive(parent);
+    Int total = 0; %% This is a comment
+                    This is multi line comment%%
+    while (seed > 0) {
+        total = total + seed;
+        seed = seed - 1;
+        print(total);
+    }
+    if (total > 10 || seed == 0) { print(total); } else { skip; }
+    send total to parent;
+    return total;
+}
+
+func Int orchestrator(Pid parent) {
+    Pid workerPid = spawn worker(parent);
+    send 5 to workerPid;
+
+    Int result = receive(workerPid);
+    Int doubled = result * 2;
+    Bool largeEnough = doubled >= 10 && result != 0;
+    if (largeEnough) { print(doubled); } else { skip; }
+    print(result + 1);
+
+    return result;
+}
+
+func Int main() {
+    Pid selfPid = self;
+    Int result = call orchestrator(selfPid);
+    print(result);
+    return result;
+}

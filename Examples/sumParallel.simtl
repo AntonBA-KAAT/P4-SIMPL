@@ -1,0 +1,57 @@
+func Int worker(Pid parent) {
+    Int i = 1;
+    Int sum = 0;
+
+    while (i <= 5000) {
+        if (i == 1000) {
+            print(1000);
+        } else {
+            skip;
+        }
+
+        if (i == 3000) {
+            print(3000);
+        } else {
+            skip;
+        }
+
+        sum = sum + i;
+        i = i + 1;
+    }
+
+    send sum to parent;
+    return 0;
+}
+
+func Int main() {
+    Pid p = spawn worker(self);
+
+    Int i = 5001;
+    Int sum = 0;
+
+    while (i <= 10000) {
+        if (i == 7000) {
+            print(7000);
+        } else {
+            skip;
+        }
+
+        if (i == 9000) {
+            print(9000);
+        } else {
+            skip;
+        }
+
+        sum = sum + i;
+        i = i + 1;
+    }
+
+    Int workerSum = receive(p);
+    Int total = sum + workerSum;
+
+    print(sum);
+    print(workerSum);
+    print(total);
+
+    return total;
+}
