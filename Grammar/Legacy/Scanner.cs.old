@@ -334,9 +334,16 @@ public class Scanner {
 	}
 
 	Token NextToken() {
-		while (ch == ' ' ||
-			ch >= 9 && ch <= 10 || ch == 13 || ch == ' '
-		) NextCh();
+		while (true) {
+			while (ch == ' ' ||
+				ch >= 9 && ch <= 10 || ch == 13 || ch == ' '
+			) NextCh();
+			if (ch == '%') {
+				do NextCh(); while (ch != EOL && ch != Buffer.EOF);
+				continue;
+			}
+			break;
+		}
 
 		int recKind = noSym;
 		int recEnd = pos;

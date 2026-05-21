@@ -1,0 +1,4 @@
+func Int main() {
+    Int x = true;
+    return x;
+}

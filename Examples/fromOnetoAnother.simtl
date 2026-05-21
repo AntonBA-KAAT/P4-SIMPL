@@ -1,0 +1,20 @@
+func Int workerA(Pid target) {
+    send 10 to target;
+    return 0;
+}
+
+func Int workerB(Pid parent) {
+    Pid a = receive(parent);
+    Int x = receive(a);
+    print(x);
+    return x;
+}
+
+func Int main() {
+    Pid b = spawn workerB(self);
+    Pid a = spawn workerA(b);
+
+    send a to b;
+    
+    return 0;
+}
