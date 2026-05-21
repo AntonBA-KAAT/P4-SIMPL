@@ -13,13 +13,20 @@ public System.Collections.Generic.List<ExprNode> ArgsResult;
 public ExprNode ExprResult;
 
 CHARACTERS
-  letter = 'A'..'Z' + 'a'..'z'.
-  digit  = '0'..'9'.
-  ws     = ' ' + '\t' + '\r' + '\n'.
+  letter      = 'A'..'Z' + 'a'..'z'.
+  digit       = '0'..'9'.
+  ws          = ' ' + '\t' + '\r' + '\n'.
+  newLine     = '\r' + '\n'.
+  notNewLine  = ANY - newLine.
+  notPercent  = ANY - '%'.
 
 TOKENS
   ident  = letter {letter | digit | "_"}.
   number = digit {digit}.
+
+PRAGMAS
+  percentComment = "%" { notNewLine } newLine.
+  blockComment   = "%%" { notPercent | "%" notPercent } "%%".
 
 IGNORE ws
 
@@ -57,7 +64,7 @@ Type =
 
 StmtSeq =
   (. var statements = new System.Collections.Generic.List<StatementNode>(); .)
-  [ Statement (. statements.Add(StatementResult); .) { ";" Statement (. statements.Add(StatementResult); .) } [ ";" ] ]
+  [ Statement (. statements.Add(StatementResult); .) { Statement (. statements.Add(StatementResult); .) } ]
   (. StmtSeqResult = statements; .)
 .
 
@@ -86,34 +93,34 @@ WhileStmt =
 
 AssignStmt =
   (. string name; .)
-  ident (. name = t.val; .) "=" RHS
+  ident (. name = t.val; .) "=" RHS ";"
   (. StatementResult = new AssignNode(new VarNode(name), RhsResult); .)
 .
 
 DeclStmt =
   (. string name; .)
-  Type ident (. name = t.val; .) "=" RHS
+  Type ident (. name = t.val; .) "=" RHS ";"
   (. StatementResult = new DeclNode(TypeResult, name, RhsResult); .)
 .
 
 PrintStmt =
-  "print" "(" Expr ")"
+  "print" "(" Expr ")" ";"
   (. StatementResult = new PrintNode(ExprResult); .)
 .
 
 ReturnStmt =
-  "return" Expr
+  "return" Expr ";"
   (. StatementResult = new ReturnNode(ExprResult); .)
 .
 
 SendStmt =
   (. ExprNode message; ExprNode target; .)
-  "send" Expr (. message = ExprResult; .) "to" Expr (. target = ExprResult; .)
+  "send" Expr (. message = ExprResult; .) "to" Expr (. target = ExprResult; .) ";"
   (. StatementResult = new SendNode(message, target); .)
 .
 
 SkipStmt =
-  "skip"
+  "skip" ";"
   (. StatementResult = new SkipNode(); .)
 .
 
@@ -175,7 +182,7 @@ UnaryExp =
 .
 
 Primary =
-    number (. ExprResult = new NumberNode(t.val); .)
+    number (. ExprResult = new NumberNode(int.Parse(t.val)); .)
   | "true" (. ExprResult = new BoolNode(true); .)
   | "false" (. ExprResult = new BoolNode(false); .)
   | ident (. ExprResult = new VarNode(t.val); .)
