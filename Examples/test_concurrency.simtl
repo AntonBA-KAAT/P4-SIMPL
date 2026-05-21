@@ -1,0 +1,15 @@
+func Int worker(Pid parent) {
+    send true to parent;
+    return 0;
+}
+
+func Int main() {
+    Pid p = spawn worker(self);
+    Bool b = receive(p);
+
+    if (b) {
+        return 1;
+    } else {
+        return 0;
+    }
+}

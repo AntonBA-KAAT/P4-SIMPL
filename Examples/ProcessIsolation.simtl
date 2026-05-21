@@ -1,0 +1,12 @@
+func Int worker(Pid parent) {
+    Int x = 99;
+    send x to parent;
+    return 0;
+}
+
+func Int main() {
+    Int x = 5;
+    Pid p = spawn worker(self);
+    Int y = receive(p);
+    return x + y;
+}
