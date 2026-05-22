@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk"> 
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,13 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IncludeLegacyParser)' == 'true'">
-    <Compile Include="..\Grammar\Parser.cs" Link="Parser.cs" />
-    <Compile Include="..\Grammar\Scanner.cs" Link="Scanner.cs" />
+    <Compile Include="..\Grammar\Parser.cs" Link="Parser.cs" Nullable="disable" />
+    <Compile Include="..\Grammar\Scanner.cs" Link="Scanner.cs" Nullable="disable" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Grammar\AstGen\Parser.cs" Link="AstGen.Parser.cs" />
-    <Compile Include="..\Grammar\AstGen\Scanner.cs" Link="AstGen.Scanner.cs" />
+    <Compile Include="..\Grammar\AstGen\Parser.cs" Link="AstGen.Parser.cs" Nullable="disable" />
+    <Compile Include="..\Grammar\AstGen\Scanner.cs" Link="AstGen.Scanner.cs" Nullable="disable" />
   </ItemGroup>
 
 </Project>
