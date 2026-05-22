@@ -20,7 +20,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_ArithmeticOperations_Work()
     {
-        var program = ParseFile("Examples/arithmetic.simtl");
+        var program = ParseFile("Examples/arithmetic.simpl");
         var checker = new TypeChecker();
         checker.CheckProgram(program);
         var interpreter = new Interpreter(program);
@@ -32,7 +32,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_SpawnPid_ReturnsPid()
     {
-        var program = ParseFile("Examples/spawn_pid.simtl");
+        var program = ParseFile("Examples/spawn_pid.simpl");
         var checker = new TypeChecker();
         checker.CheckProgram(program);
         var interpreter = new Interpreter(program);
@@ -43,7 +43,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_SendReceive_CommunicatesBetweenProcesses()
     {
-        var program = ParseFile("Examples/send_receive.simtl");
+        var program = ParseFile("Examples/send_receive.simpl");
         var checker = new TypeChecker();
         checker.CheckProgram(program);
         var interpreter = new Interpreter(program);
@@ -54,7 +54,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_DistributedMemory_ProcessesDoNotShareVariables()
     {
-        var program = ParseFile("Examples/ProcessIsolation.simtl");
+        var program = ParseFile("Examples/ProcessIsolation.simpl");
         var checker = new TypeChecker();
         checker.CheckProgram(program);
 
@@ -67,7 +67,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_BooleanAndRelationalExpressions_Work()
     {
-        var program = ParseFile("Examples/BooleanRelational.simtl");
+        var program = ParseFile("Examples/BooleanRelational.simpl");
 
         var checker = new TypeChecker();
         checker.CheckProgram(program);
@@ -81,7 +81,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_TypeErrors_AreRejected()
     {
-        var program = ParseFile("Examples/typeError.simtl");
+        var program = ParseFile("Examples/typeError.simpl");
 
         var checker = new TypeChecker();
 
@@ -90,7 +90,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_ReturnPath_IsChecked()
     {
-        var program = ParseFile("Examples/returnErrorParse.simtl");
+        var program = ParseFile("Examples/returnErrorParse.simpl");
 
         var checker = new TypeChecker();
 
@@ -100,7 +100,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_WhileAndIf_ControlFlowWorks()
     {
-        var program = ParseFile("Examples/while_if.simtl");
+        var program = ParseFile("Examples/while_if.simpl");
 
         var checker = new TypeChecker();
         checker.CheckProgram(program);
@@ -114,7 +114,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_PassingPidsAsMessages_Works()
     {
-        var program = ParseFile("Examples/fromOnetoAnother.simtl");
+        var program = ParseFile("Examples/fromOnetoAnother.simpl");
 
         var checker = new TypeChecker();
         checker.CheckProgram(program);
@@ -128,7 +128,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_ComplexWorkflow_WithLoopsAndConditionals()
     {
-        var program = ParseFile("Examples/full_showcase.simtl");
+        var program = ParseFile("Examples/full_showcase.simpl");
 
         var checker = new TypeChecker();
         checker.CheckProgram(program);
@@ -142,7 +142,7 @@ public class RequirementAcceptanceTests
     [Fact]
     public void MustHave_ConcurrentBoolReceive_Works()
     {
-        var program = ParseFile("Examples/test_concurrency.simtl");
+        var program = ParseFile("Examples/test_concurrency.simpl");
 
         var checker = new TypeChecker();
         checker.CheckProgram(program);

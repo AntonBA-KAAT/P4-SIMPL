@@ -80,7 +80,7 @@ public sealed class TypeChecker
 
             BinaryExprNode b => CheckBinaryExpr(b, env),
 
-            CallExprNode c => throw new TypeCheckException($"Call expression '{c.Name}(...)' is not allowed as a pure expression in SIMTL."),
+            CallExprNode c => throw new TypeCheckException($"Call expression '{c.Name}(...)' is not allowed as a pure expression in SIMPL."),
 
             _ => throw new TypeCheckException($"Unsupported expression node: {expr.GetType().Name}") 
         };
