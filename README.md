@@ -1,6 +1,6 @@
-# P4-SIMTL
+# P4-SIMPL
 
-Semester 4 bachelor project implementing a small language and runtime for SIMTL programs.
+Semester 4 bachelor project implementing a small language and runtime for SIMPL programs.
 
 This repository contains:
 - scanner/parser generation artifacts,
@@ -11,11 +11,11 @@ This repository contains:
 
 ## Features
 
-- Parsing SIMTL source files
+- Parsing SIMPL source files
 - AST-based parsing mode with typed AST nodes
 - Type checker with return-path validation and type mismatch detection
 - Interpreter execution for arithmetic, control flow, function calls, and process primitives
-- Example SIMTL programs and automated tests
+- Example SIMPL programs and automated tests
 
 ## Prerequisites
 
@@ -33,27 +33,27 @@ dotnet --info
 From the repository root:
 
 ```bash
-dotnet build P4-SIMTL.sln
+dotnet build P4-SIMPL.sln
 ```
 
 Run parser + AST + type checker + interpreter mode:
 
 ```bash
-dotnet run --project Src -- Examples/arithmetic.simtl
+dotnet run --project Src -- Examples/arithmetic.simpl
 ```
 
 Expected successful output includes:
 - `Parse OK`
 - `Typecheck OK`
 - `Program returned: <value>`
-- interpreter prints/behavior from the SIMTL program
+- interpreter prints/behavior from the SIMPL program
 
 ## Running Tests
 
 Run all tests:
 
 ```bash
-dotnet test P4-SIMTL.sln
+dotnet test P4-SIMPL.sln
 ```
 
 Run unit tests only:
@@ -82,7 +82,7 @@ dotnet test Tests/AstTests.csproj --filter "FullyQualifiedName~Acceptance"
 - Test builds disable the legacy parser through the `ProjectReference` in `Tests/AstTests.csproj` (`AdditionalProperties="IncludeLegacyParser=false"`).
 - Tests therefore use the AST parser (`MyLangAstGen.Parser` / `MyLangAstGen.Scanner`) and do not compile the legacy `Grammar/Parser.cs` and `Grammar/Scanner.cs` for the test build path.
 
-## SIMTL Language Snapshot
+## SIMPL Language Snapshot
 
 The current examples/tests exercise:
 - Primitive types: `Int`, `Bool`, `Pid`
@@ -94,7 +94,7 @@ The current examples/tests exercise:
 
 Minimal example:
 
-```simtl
+```
 func Int main() {
 	Int x = 40;
 	x = x + 2;
@@ -109,15 +109,15 @@ func Int main() {
 - `Grammar/` - grammar and generated scanner/parser sources (including AST generator output)
 - `CoCoR/` - parser/scanner frame files used by generator tooling
 - `Tests/` - unit, integration, and acceptance tests
-- `Examples/` - SIMTL sample programs used by tests and manual runs
-- `P4-SIMTL.sln` - solution file
+- `Examples/` - SIMPL sample programs used by tests and manual runs
+- `P4-SIMPL.sln` - solution file
 
 ## Example Programs
 
-- `Examples/arithmetic.simtl`
-- `Examples/spawn_pid.simtl`
-- `Examples/send_receive.simtl`
-- `Examples/full_showcase.simtl`
+- `Examples/arithmetic.simpl`
+- `Examples/spawn_pid.simpl`
+- `Examples/send_receive.simpl`
+- `Examples/full_showcase.simpl`
 
 These are useful for both manual runs (`dotnet run --project Src -- <file>`) and for understanding supported syntax.
 
