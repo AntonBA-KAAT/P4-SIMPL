@@ -1,10 +1,25 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk"> 
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IncludeLegacyParser>false</IncludeLegacyParser>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IncludeLegacyParser)' == 'true'">
+    <DefineConstants>$(DefineConstants);INCLUDE_LEGACY_PARSER</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IncludeLegacyParser)' == 'true'">
+    <Compile Include="..\Grammar\Parser.cs" Link="Parser.cs" Nullable="disable" />
+    <Compile Include="..\Grammar\Scanner.cs" Link="Scanner.cs" Nullable="disable" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Grammar\AstGen\Parser.cs" Link="AstGen.Parser.cs" Nullable="disable" />
+    <Compile Include="..\Grammar\AstGen\Scanner.cs" Link="AstGen.Scanner.cs" Nullable="disable" />
+  </ItemGroup>
 
 </Project>
