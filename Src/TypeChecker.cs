@@ -227,6 +227,7 @@ public sealed class TypeChecker
             if (result.DefinitelyReturns)
             {
                 definitelyReturns = true;
+                break;
             }
         }
         return new StatementCheckResult(currentEnv, definitelyReturns);
