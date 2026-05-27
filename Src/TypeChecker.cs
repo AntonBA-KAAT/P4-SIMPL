@@ -227,7 +227,7 @@ public sealed class TypeChecker
             if (result.DefinitelyReturns)
             {
                 definitelyReturns = true;
-                break; // No need to check further statements after a return
+                break;
             }
         }
         return new StatementCheckResult(currentEnv, definitelyReturns);
